@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom'; // REMOVED BrowserRouter/Router
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
@@ -13,26 +13,26 @@ import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+    // REMOVED <Router> tag
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
 
-        {/* Protected Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="admin" element={<AdminDashboard />} />
-            <Route path="chat" element={<Chat />} />
-            <Route path="applications" element={<Applications />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="results" element={<Results />} />
-            <Route path="courses" element={<Courses />} />
-          </Route>
+      {/* Protected Routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="admin" element={<AdminDashboard />} />
+          <Route path="chat" element={<Chat />} />
+          <Route path="applications" element={<Applications />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="results" element={<Results />} />
+          <Route path="courses" element={<Courses />} />
         </Route>
-      </Routes>
-    </Router>
-  )
+      </Route>
+    </Routes>
+    // REMOVED </Router> tag
+  );
 }
 
 export default App;
