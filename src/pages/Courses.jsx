@@ -11,14 +11,7 @@ const Courses = () => {
             category: "Frontend",
             color: "blue"
         },
-        {
-            title: "System Design for Beginners",
-            provider: "Udemy",
-            duration: "12h 15m",
-            rating: 4.7,
-            category: "Backend",
-            color: "purple"
-        },
+
         {
             title: "Figma for Developers",
             provider: "DesignCourse",

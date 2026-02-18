@@ -30,7 +30,7 @@ const Applications = () => {
                                 <td className="px-6 py-4 text-slate-600">{app.role}</td>
                                 <td className="px-6 py-4 text-slate-500">{app.date}</td>
                                 <td className="px-6 py-4">
-                                    <button className="text-blue-600 hover:underline">Edit</button>
+                                    <button className="text-blue-600 hover:underline">Apply</button>
                                 </td>
                             </tr>
                         ))}
