@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Users, UserCheck, Search, Filter } from 'lucide-react';
+import { Users, UserCheck, Search, Filter, X, Save } from 'lucide-react';
 
 const AdminDashboard = () => {
     // Lazy initialization of users state
-    const [users] = useState(() => {
+    const [users, setUsers] = useState(() => {
         // Mock data for demonstration - in a real app, fetch from API
         // Including the locally stored user if available
         const localUserJSON = localStorage.getItem('registeredUser');
@@ -31,6 +31,20 @@ const AdminDashboard = () => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('All');
+    const [editingUser, setEditingUser] = useState(null);
+
+    const handleEditClick = (user) => {
+        setEditingUser({ ...user });
+    };
+
+    const handleSaveEdit = () => {
+        setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
+        setEditingUser(null);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingUser(null);
+    };
 
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -126,8 +140,8 @@ const AdminDashboard = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-full text-xs font-medium border ${user.role === 'Admin' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                                                    user.role === 'Student' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                        'bg-green-500/10 text-green-400 border-green-500/20'
+                                                user.role === 'Student' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                    'bg-green-500/10 text-green-400 border-green-500/20'
                                                 }`}>
                                                 {user.role}
                                             </span>
@@ -144,7 +158,10 @@ const AdminDashboard = () => {
                                             {user.joined}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="text-slate-400 hover:text-white transition-colors">
+                                            <button
+                                                onClick={() => handleEditClick(user)}
+                                                className="text-slate-400 hover:text-white transition-colors"
+                                            >
                                                 Edit
                                             </button>
                                         </td>
@@ -161,6 +178,83 @@ const AdminDashboard = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {editingUser && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-slate-800 rounded-xl border border-slate-700 w-full max-w-md p-6 space-y-6">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-bold">Edit User</h2>
+                            <button onClick={handleCancelEdit} className="text-slate-400 hover:text-white">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Name</label>
+                                <input
+                                    type="text"
+                                    value={editingUser.name}
+                                    onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                                    className="w-full bg-slate-900 border border-slate-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    value={editingUser.email}
+                                    disabled
+                                    className="w-full bg-slate-900/50 border border-slate-700 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Role</label>
+                                <select
+                                    value={editingUser.role}
+                                    onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                                    className="w-full bg-slate-900 border border-slate-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500"
+                                >
+                                    <option value="Student">Student</option>
+                                    <option value="Job Seeker">Job Seeker</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Status</label>
+                                <select
+                                    value={editingUser.status}
+                                    onChange={(e) => setEditingUser({ ...editingUser, status: e.target.value })}
+                                    className="w-full bg-slate-900 border border-slate-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500"
+                                >
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 pt-2">
+                            <button
+                                onClick={handleCancelEdit}
+                                className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveEdit}
+                                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Save size={18} />
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
