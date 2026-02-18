@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, ChevronRight } from 'lucide-react';
+import { User, Shield, ChevronRight } from 'lucide-react';
 import ProfileSettings from '../components/settings/ProfileSettings';
-import NotificationSettings from '../components/settings/NotificationSettings';
 import SecuritySettings from '../components/settings/SecuritySettings';
 
 const Settings = () => {
@@ -9,7 +8,6 @@ const Settings = () => {
 
     const tabs = [
         { id: 'profile', label: 'Profile', icon: User },
-        { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'security', label: 'Security', icon: Shield },
     ];
 
@@ -46,7 +44,6 @@ const Settings = () => {
                 {/* Content Area */}
                 <div className="md:col-span-3 space-y-6">
                     {activeTab === 'profile' && <ProfileSettings />}
-                    {activeTab === 'notifications' && <NotificationSettings />}
                     {activeTab === 'security' && <SecuritySettings />}
                 </div>
             </div>

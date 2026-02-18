@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, CheckCircle, Clock } from 'lucide-react';
-import ApplicationTrendChart from '../components/ApplicationTrendChart';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -69,13 +68,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Application Trend Section (Preserved) */}
-            <div className="pt-8 border-t border-slate-800">
-                <h2 className="text-2xl font-bold text-white mb-6">Application Trend</h2>
-                <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50">
-                    <ApplicationTrendChart />
-                </div>
-            </div>
+            {/* Application Trend removed */}
         </div>
     );
 };
