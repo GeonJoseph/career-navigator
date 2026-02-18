@@ -26,7 +26,6 @@ const Signup = () => {
 
         // Redirect to dashboard
         navigate('/');
-        window.location.reload();
     };
 
     return (

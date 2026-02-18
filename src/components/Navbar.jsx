@@ -57,7 +57,6 @@ const Navbar = () => {
                                 localStorage.removeItem('userEmail');
                                 localStorage.removeItem('userName');
                                 navigate('/');
-                                window.location.reload();
                             }}
                             className="text-slate-300 hover:text-white font-medium px-4 py-2 transition-colors"
                         >

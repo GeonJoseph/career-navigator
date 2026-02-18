@@ -23,7 +23,6 @@ const Login = () => {
                 localStorage.setItem('userName', 'Admin User');
                 localStorage.setItem('userEmail', email);
                 navigate('/admin');
-                window.location.reload();
                 return;
             } else {
                 setError('Invalid admin credentials');
@@ -49,7 +48,6 @@ const Login = () => {
             localStorage.setItem('userEmail', storedUser.email);
             localStorage.setItem('userName', storedUser.name);
             navigate('/'); // Redirect to normal dashboard
-            window.location.reload();
         } else {
             // Login Failed
             setError('Invalid email or password');
