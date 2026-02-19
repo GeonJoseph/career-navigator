@@ -1,26 +1,88 @@
-import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User } from 'lucide-react';
 
 const Chat = () => {
     const [messages, setMessages] = useState([
-        { id: 1, text: "Hello! I am an AI assistant. How can I help you regarding your career?", sender: 'bot' }
+        { id: 1, text: "Hello! I am your career guidance assistant.", sender: 'bot' }
     ]);
     const [input, setInput] = useState('');
 
-    const handleSend = (e) => {
+    const messagesEndRef = useRef(null);
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+    const navigate = useNavigate();
+
+
+    const handleSend = async (e) => {
         e.preventDefault();
         if (!input.trim()) return;
 
-        const newMessage = { id: Date.now(), text: input, sender: 'user' };
-        setMessages([...messages, newMessage]);
+        const currentInput = input;
         setInput('');
 
-        // Simulate bot response
-        setTimeout(() => {
-            const botResponse = { id: Date.now() + 1, text: "As an AI model, I can provide information and assistance based on my training data. How else may I assist you?", sender: 'bot' };
-            setMessages(prev => [...prev, botResponse]);
-        }, 1000);
+        const userMessage = {
+            id: Date.now(),
+            text: currentInput,
+            sender: 'user'
+        };
+
+        const loadingId = Date.now() + 1;
+
+        const loadingMessage = {
+            id: loadingId,
+            text: "Generating response...",
+            sender: 'bot',
+            loading: true
+        };
+
+        // Add user + loading together
+        setMessages(prev => [...prev, userMessage, loadingMessage]);
+
+        try {
+            const response = await fetch("http://localhost:8000/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: currentInput })
+            });
+
+            const data = await response.json();
+
+            // Remove loading message
+            setMessages(prev =>
+                prev.filter(msg => msg.id !== loadingId)
+            );
+
+            // Save to localStorage
+            localStorage.setItem(
+                "careerResults",
+                JSON.stringify(data.recommendations)
+            );
+
+            // Navigate to results page
+            navigate("/results");
+
+        } catch (error) {
+            console.error(error);
+
+            setMessages(prev =>
+                prev.map(msg =>
+                    msg.loading
+                        ? {
+                            id: Date.now() + 2,
+                            text: "Error generating response.",
+                            sender: 'bot'
+                        }
+                        : msg
+                )
+            );
+        }
     };
+
+
+
 
     return (
         <div className="flex flex-col h-[calc(100vh-140px)] bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -46,6 +108,7 @@ const Chat = () => {
                         </div>
                     </div>
                 ))}
+                <div ref={messagesEndRef} />
             </div>
 
             <div className="p-4 border-t border-slate-100">

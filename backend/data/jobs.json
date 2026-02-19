@@ -1,0 +1,133 @@
+[
+  {
+    "title": "Data Analyst",
+    "description": "Analyzes data, finds trends, builds dashboards, and works with statistics."
+  },
+  {
+    "title": "Business Analyst",
+    "description": "Analyzes business processes, identifies improvements, and works with data insights."
+  },
+  {
+    "title": "AI Engineer",
+    "description": "Builds machine learning models and works with artificial intelligence systems."
+  },
+  {
+    "title": "Graphic Designer",
+    "description": "Creates visual content, designs graphics, and works with creative tools."
+  },
+  {
+    "title": "UI/UX Designer",
+    "description": "Designs user interfaces and improves user experience for applications."
+  },
+  {
+    "title": "Content Creator",
+    "description": "Creates written or visual content for media and marketing platforms."
+  },
+  {
+    "title": "Software Developer",
+    "description": "Designs and develops software applications, writes code, and solves technical problems."
+  },
+  {
+    "title": "Teacher",
+    "description": "Educates students, prepares lessons, and explains concepts clearly."
+  },
+  {
+    "title": "Marketing Specialist",
+    "description": "Promotes products and services using campaigns and customer analysis."
+  },
+  {
+  "title": "Backend Developer",
+  "description": "Develops server-side applications, builds APIs, manages databases, and writes backend code using programming languages."
+},
+{
+  "title": "Frontend Developer",
+  "description": "Builds user interfaces, works with HTML, CSS, JavaScript, and creates responsive web applications."
+},
+{
+  "title": "Full Stack Developer",
+  "description": "Develops both frontend and backend systems, integrates databases, and builds complete web applications."
+},
+{
+  "title": "Machine Learning Engineer",
+  "description": "Builds machine learning models, works with data science, algorithms, and artificial intelligence systems."
+},
+{
+  "title": "Data Scientist",
+  "description": "Analyzes large datasets, builds predictive models, applies statistics, and extracts insights from data."
+},
+{
+  "title": "Network Engineer",
+  "description": "Designs computer networks, manages routers and servers, and ensures secure data communication."
+},
+{
+  "title": "Blockchain Developer",
+  "description": "Develops blockchain applications, writes smart contracts, and works with distributed ledger technology."
+},
+{
+  "title": "Mobile App Developer",
+  "description": "Builds mobile applications for Android and iOS, writes application code, and improves user experience."
+},
+
+{
+  "title": "Surgeon",
+  "description": "Performs medical surgeries, treats injuries, and provides specialized medical care in hospitals."
+},
+{
+  "title": "Physiotherapist",
+  "description": "Helps patients recover from injuries, improves mobility, and provides physical therapy treatment."
+},
+{
+  "title": "Dentist",
+  "description": "Treats dental problems, performs oral procedures, and provides dental health care."
+},
+{
+  "title": "Medical Laboratory Scientist",
+  "description": "Analyzes medical samples, conducts laboratory tests, and supports diagnosis through scientific analysis."
+},
+{
+  "title": "Public Health Officer",
+  "description": "Improves community health, manages disease prevention programs, and analyzes health data."
+},
+
+{
+  "title": "Animator",
+  "description": "Creates animated videos, designs motion graphics, and works with digital animation software."
+},
+{
+  "title": "Film Director",
+  "description": "Directs films, manages production teams, and develops creative storytelling projects."
+},
+{
+  "title": "Fashion Designer",
+  "description": "Designs clothing, develops fashion collections, and works with creative textile concepts."
+},
+{
+  "title": "Interior Designer",
+  "description": "Designs interior spaces, selects furniture and color themes, and improves room aesthetics."
+},
+{
+  "title": "Photographer",
+  "description": "Captures photographs, edits images, and works with creative visual composition."
+},
+
+{
+  "title": "Investment Banker",
+  "description": "Manages financial investments, analyzes market trends, and advises clients on capital growth strategies."
+},
+{
+  "title": "Chartered Accountant",
+  "description": "Manages financial records, performs audits, and ensures compliance with accounting standards."
+},
+{
+  "title": "Operations Manager",
+  "description": "Oversees business operations, improves workflow efficiency, and manages organizational processes."
+},
+{
+  "title": "Robotics Engineer",
+  "description": "Designs robotic systems, develops automation technology, and programs intelligent machines."
+},
+{
+  "title": "Environmental Scientist",
+  "description": "Studies environmental issues, analyzes climate data, and develops sustainability solutions."
+}
+]
