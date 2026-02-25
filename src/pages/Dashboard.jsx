@@ -22,7 +22,6 @@ const Dashboard = () => {
                     >
                         Start with Career Bot
                     </button>
-
                 </div>
             </section>
 
@@ -67,8 +66,6 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Application Trend removed */}
         </div>
     );
 };
