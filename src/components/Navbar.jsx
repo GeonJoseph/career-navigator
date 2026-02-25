@@ -48,11 +48,10 @@ const Navbar = () => {
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                                        isActive
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${isActive
                                             ? 'bg-slate-800 text-blue-400 border border-slate-700'
                                             : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                    }`}
+                                        }`}
                                 >
                                     {item.label}
                                 </Link>
@@ -65,14 +64,28 @@ const Navbar = () => {
             <div className="flex items-center gap-4">
                 {localStorage.getItem('isAuthenticated') === 'true' ? (
                     <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold">
+                        <Link
+                            to="/settings"
+                            className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold hover:bg-blue-600 transition-colors cursor-pointer"
+                            title="View Profile"
+                        >
                             {localStorage.getItem('userName')
                                 ? localStorage.getItem('userName').charAt(0).toUpperCase()
                                 : 'U'}
-                        </div>
+                        </Link>
 
                         <button
                             onClick={() => {
+                                // Sync logout status with Monitor Status System
+                                const userEmail = localStorage.getItem('userEmail');
+                                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                                const userIndex = users.findIndex(u => u.email === userEmail);
+
+                                if (userIndex !== -1) {
+                                    users[userIndex].status = 'Inactive';
+                                    localStorage.setItem('users', JSON.stringify(users));
+                                }
+
                                 localStorage.removeItem('isAuthenticated');
                                 localStorage.removeItem('userEmail');
                                 localStorage.removeItem('userName');

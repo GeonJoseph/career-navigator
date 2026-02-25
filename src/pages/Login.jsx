@@ -14,42 +14,43 @@ const Login = () => {
         e.preventDefault();
         setError('');
 
-        // Admin Login Hardcoded Check
-        if (role === 'Admin') {
-            if (email === 'admin@careernavigator.io' && password === 'admin123') {
-                console.log('Admin Login Successful');
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userRole', 'Admin');
-                localStorage.setItem('userName', 'Admin User');
-                localStorage.setItem('userEmail', email);
-                navigate('/admin');
-                return;
-            } else {
-                setError('Invalid admin credentials');
+        // Shared User Logic
+        let users = JSON.parse(localStorage.getItem('users') || '[]');
+
+        // Seed mock users if the list is empty
+        if (users.length === 0) {
+            const mockUsers = [
+                { id: 1, name: 'John Doe', email: 'john@example.com', password: 'password123', role: 'User', status: 'Active', joined: '2025-10-15' },
+                { id: 2, name: 'Jane Smith', email: 'jane@example.com', password: 'password123', role: 'User', status: 'Active', joined: '2025-11-20' },
+                { id: 3, name: 'Admin User', email: 'admin@careernavigator.io', password: 'admin123', role: 'Admin', status: 'Active', joined: '2025-09-01' },
+                { id: 4, name: 'Mike Brown', email: 'mike@example.com', password: 'password123', role: 'User', status: 'Inactive', joined: '2026-01-10' },
+            ];
+            localStorage.setItem('users', JSON.stringify(mockUsers));
+            users = mockUsers;
+        }
+
+        const userIndex = users.findIndex(u => u.email === email && u.password === password);
+
+        if (userIndex !== -1) {
+            const loggedInUser = users[userIndex];
+
+            // Check if account is inactive
+            if (loggedInUser.status === 'Inactive') {
+                setError('Your account is currently inactive. Please contact the administrator.');
                 return;
             }
-        }
 
-        // Regular User Login (Mock DB)
-        const storedUserJSON = localStorage.getItem('registeredUser');
+            // Update status to Active in shared list
+            users[userIndex].status = 'Active';
+            localStorage.setItem('users', JSON.stringify(users));
 
-        if (!storedUserJSON) {
-            setError('No account found. Please sign up first.');
-            return;
-        }
-
-        const storedUser = JSON.parse(storedUserJSON);
-
-        if (email === storedUser.email && password === storedUser.password) {
-            // Login Success
-            console.log('Login Successful');
             localStorage.setItem('isAuthenticated', 'true');
-            localStorage.setItem('userRole', role); // Store the selected role
-            localStorage.setItem('userEmail', storedUser.email);
-            localStorage.setItem('userName', storedUser.name);
-            navigate('/'); // Redirect to normal dashboard
+            localStorage.setItem('userRole', loggedInUser.role);
+            localStorage.setItem('userEmail', loggedInUser.email);
+            localStorage.setItem('userName', loggedInUser.name);
+
+            navigate(loggedInUser.role === 'Admin' ? '/admin' : '/');
         } else {
-            // Login Failed
             setError('Invalid email or password');
         }
     };
@@ -147,9 +148,9 @@ const Login = () => {
                                 <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
                                 <span className="text-sm text-slate-600">Remember me</span>
                             </label>
-                            <button type="button" className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
+                            <Link to="/forgot-password" class="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
                                 Forgot password?
-                            </button>
+                            </Link>
                         </div>
 
                         <button

@@ -10,6 +10,7 @@ import Results from './pages/Results';
 import Courses from './pages/Courses';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './pages/AdminDashboard';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
 
@@ -19,6 +20,7 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
@@ -31,7 +33,7 @@ function App() {
           <Route
             path="applications"
             element={
-              role === "admin"
+              role?.toLowerCase() === "admin"
                 ? <Navigate to="/admin" replace />
                 : <Applications />
             }

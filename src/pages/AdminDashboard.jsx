@@ -1,33 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, UserCheck, Search, Filter, X, Save } from 'lucide-react';
 
 const AdminDashboard = () => {
     // Lazy initialization of users state
     const [users, setUsers] = useState(() => {
-        // Mock data for demonstration - in a real app, fetch from API
-        // Including the locally stored user if available
-        const localUserJSON = localStorage.getItem('registeredUser');
-        const localUser = localUserJSON ? JSON.parse(localUserJSON) : null;
+        const storedUsers = localStorage.getItem('users');
+        if (storedUsers) {
+            return JSON.parse(storedUsers);
+        }
 
         const mockUsers = [
-            { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Student', status: 'Active', joined: '2025-10-15' },
-            { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Job Seeker', status: 'Active', joined: '2025-11-20' },
-            { id: 3, name: 'Admin User', email: 'admin@careernavigator.io', role: 'Admin', status: 'Active', joined: '2025-09-01' },
-            { id: 4, name: 'Mike Brown', email: 'mike@example.com', role: 'Student', status: 'Inactive', joined: '2026-01-10' },
+            { id: 1, name: 'John Doe', email: 'john@example.com', password: 'password123', role: 'User', status: 'Active', joined: '2025-10-15' },
+            { id: 2, name: 'Jane Smith', email: 'jane@example.com', password: 'password123', role: 'User', status: 'Active', joined: '2025-11-20' },
+            { id: 3, name: 'Admin User', email: 'admin@careernavigator.io', password: 'admin123', role: 'Admin', status: 'Active', joined: '2025-09-01' },
+            { id: 4, name: 'Mike Brown', email: 'mike@example.com', password: 'password123', role: 'User', status: 'Inactive', joined: '2026-01-10' },
         ];
 
-        if (localUser && !mockUsers.find(u => u.email === localUser.email)) {
-            mockUsers.push({
-                id: 5,
-                name: localUser.name,
-                email: localUser.email,
-                role: 'Student', // Default for now
-                status: 'Active',
-                joined: new Date().toISOString().split('T')[0]
-            });
-        }
+        localStorage.setItem('users', JSON.stringify(mockUsers));
         return mockUsers;
     });
+
+    // Real-time synchronization
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'users') {
+                setUsers(JSON.parse(e.newValue || '[]'));
+            }
+        };
+
+        // Listen for storage events (updates from other tabs)
+        window.addEventListener('storage', handleStorageChange);
+
+        // Periodic refresh (updates within the same tab)
+        const interval = setInterval(() => {
+            const storedUsers = localStorage.getItem('users');
+            if (storedUsers) {
+                const parsedUsers = JSON.parse(storedUsers);
+                // Simple comparison to avoid unnecessary state updates
+                if (JSON.stringify(parsedUsers) !== JSON.stringify(users)) {
+                    setUsers(parsedUsers);
+                }
+            }
+        }, 3000); // Check every 3 seconds
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            clearInterval(interval);
+        };
+    }, [users]);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('All');
@@ -38,7 +58,9 @@ const AdminDashboard = () => {
     };
 
     const handleSaveEdit = () => {
-        setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
+        const updatedUsers = users.map(u => u.id === editingUser.id ? editingUser : u);
+        setUsers(updatedUsers);
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
         setEditingUser(null);
     };
 
@@ -59,8 +81,8 @@ const AdminDashboard = () => {
                 {/* Header */}
                 <header className="flex justify-between items-center mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-                        <p className="text-slate-400">Monitor users and manage platform activity</p>
+                        <h1 className="text-3xl font-bold">Monitor Status System</h1>
+                        <p className="text-slate-400">Monitor system status and manage user roles</p>
                     </div>
                     <div className="flex gap-4">
                         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center gap-4">
@@ -104,8 +126,7 @@ const AdminDashboard = () => {
                             onChange={(e) => setFilterRole(e.target.value)}
                         >
                             <option value="All">All Roles</option>
-                            <option value="Student">Student</option>
-                            <option value="Job Seeker">Job Seeker</option>
+                            <option value="User">User</option>
                             <option value="Admin">Admin</option>
                         </select>
                     </div>
@@ -140,8 +161,7 @@ const AdminDashboard = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-full text-xs font-medium border ${user.role === 'Admin' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                                                user.role === 'Student' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                    'bg-green-500/10 text-green-400 border-green-500/20'
+                                                'bg-blue-500/10 text-blue-400 border-blue-500/20'
                                                 }`}>
                                                 {user.role}
                                             </span>
@@ -218,8 +238,7 @@ const AdminDashboard = () => {
                                     onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
                                     className="w-full bg-slate-900 border border-slate-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500"
                                 >
-                                    <option value="Student">Student</option>
-                                    <option value="Job Seeker">Job Seeker</option>
+                                    <option value="User">User</option>
                                     <option value="Admin">Admin</option>
                                 </select>
                             </div>
