@@ -11,18 +11,43 @@ const Signup = () => {
 
     const handleSignup = (e) => {
         e.preventDefault();
-        // Store registered user data (Mock Database)
-        const userData = {
+        // Store registered user data (Shared mock database)
+        let users = JSON.parse(localStorage.getItem('users') || '[]');
+
+        // Seed mock users if the list is empty (prevents missing admin issue)
+        if (users.length === 0) {
+            const mockUsers = [
+                { id: 1, name: 'John Doe', email: 'john@example.com', password: 'password123', role: 'User', status: 'Active', joined: '2025-10-15' },
+                { id: 2, name: 'Jane Smith', email: 'jane@example.com', password: 'password123', role: 'User', status: 'Active', joined: '2025-11-20' },
+                { id: 3, name: 'Admin User', email: 'admin@careernavigator.io', password: 'admin123', role: 'Admin', status: 'Active', joined: '2025-09-01' },
+                { id: 4, name: 'Mike Brown', email: 'mike@example.com', password: 'password123', role: 'User', status: 'Inactive', joined: '2026-01-10' },
+            ];
+            localStorage.setItem('users', JSON.stringify(mockUsers));
+            users = mockUsers;
+        }
+
+        const newUser = {
+            id: Date.now(),
             name,
             email,
-            password
+            password,
+            role: 'User',
+            status: 'Active',
+            joined: new Date().toISOString().split('T')[0]
         };
-        localStorage.setItem('registeredUser', JSON.stringify(userData));
+
+        if (!users.find(u => u.email === email)) {
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+
+        localStorage.setItem('registeredUser', JSON.stringify(newUser));
 
         // Auto-login after signup
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('userEmail', email);
         localStorage.setItem('userName', name);
+        localStorage.setItem('userRole', 'User');
 
         // Redirect to dashboard
         navigate('/');
@@ -84,7 +109,7 @@ const Signup = () => {
                                 >
                                     {showPassword ? (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268-2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                                         </svg>
                                     ) : (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
