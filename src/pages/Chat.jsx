@@ -42,11 +42,22 @@ const Chat = () => {
         setMessages(prev => [...prev, userMessage, loadingMessage]);
 
         try {
+            const token = localStorage.getItem("access_token");
             const response = await fetch("http://localhost:8000/chat", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({ message: currentInput })
             });
+
+            if (response.status === 401) {
+                localStorage.removeItem("access_token");
+                localStorage.removeItem("refresh_token");
+                navigate("/login");
+                return;
+            }
 
             const data = await response.json();
 

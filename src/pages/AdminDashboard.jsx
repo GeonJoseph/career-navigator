@@ -2,52 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { Users, UserCheck, Search, Filter, X, Save } from 'lucide-react';
 
 const AdminDashboard = () => {
-    // Lazy initialization of users state
-    const [users, setUsers] = useState(() => {
-        const storedUsers = localStorage.getItem('users');
-        if (storedUsers) {
-            return JSON.parse(storedUsers);
-        }
+    const [users, setUsers] = useState([]);
 
-        const mockUsers = [
-            { id: 1, name: 'John Doe', email: 'john@example.com', password: 'password123', role: 'Student', status: 'Active', joined: '2025-10-15' },
-            { id: 2, name: 'Jane Smith', email: 'jane@example.com', password: 'password123', role: 'Job Seeker', status: 'Active', joined: '2025-11-20' },
-            { id: 3, name: 'Admin User', email: 'admin@careernavigator.io', password: 'admin123', role: 'Admin', status: 'Active', joined: '2025-09-01' },
-            { id: 4, name: 'Mike Brown', email: 'mike@example.com', password: 'password123', role: 'Student', status: 'Inactive', joined: '2026-01-10' },
-        ];
-
-        localStorage.setItem('users', JSON.stringify(mockUsers));
-        return mockUsers;
-    });
-
-    // Real-time synchronization
     useEffect(() => {
-        const handleStorageChange = (e) => {
-            if (e.key === 'users') {
-                setUsers(JSON.parse(e.newValue || '[]'));
-            }
-        };
+        const fetchUsers = async () => {
+            try {
+                const token = localStorage.getItem("access_token");
 
-        // Listen for storage events (updates from other tabs)
-        window.addEventListener('storage', handleStorageChange);
+                const response = await fetch("http://127.0.0.1:8000/admin/users", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
 
-        // Periodic refresh (updates within the same tab)
-        const interval = setInterval(() => {
-            const storedUsers = localStorage.getItem('users');
-            if (storedUsers) {
-                const parsedUsers = JSON.parse(storedUsers);
-                // Simple comparison to avoid unnecessary state updates
-                if (JSON.stringify(parsedUsers) !== JSON.stringify(users)) {
-                    setUsers(parsedUsers);
+                if (!response.ok) {
+                    console.error("Failed to fetch users");
+                    return;
                 }
-            }
-        }, 3000); // Check every 3 seconds
 
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            clearInterval(interval);
+                const data = await response.json();
+                setUsers(data);
+
+            } catch (err) {
+                console.error("Error fetching users", err);
+            }
         };
-    }, [users]);
+
+        fetchUsers();
+    }, []);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('All');
@@ -57,11 +39,40 @@ const AdminDashboard = () => {
         setEditingUser({ ...user });
     };
 
-    const handleSaveEdit = () => {
-        const updatedUsers = users.map(u => u.id === editingUser.id ? editingUser : u);
-        setUsers(updatedUsers);
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-        setEditingUser(null);
+    const handleSaveEdit = async () => {
+        try {
+            const token = localStorage.getItem("access_token");
+
+            const response = await fetch(
+                `http://127.0.0.1:8000/admin/users/${editingUser.id}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        role: editingUser.role
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                console.error("Failed to update role");
+                return;
+            }
+
+            // Refresh users list
+            const updatedUsers = users.map(u =>
+                u.id === editingUser.id ? { ...u, role: editingUser.role } : u
+            );
+
+            setUsers(updatedUsers);
+            setEditingUser(null);
+
+        } catch (err) {
+            console.error("Error updating role", err);
+        }
     };
 
     const handleCancelEdit = () => {
@@ -126,8 +137,7 @@ const AdminDashboard = () => {
                             onChange={(e) => setFilterRole(e.target.value)}
                         >
                             <option value="All">All Roles</option>
-                            <option value="Student">Student</option>
-                            <option value="Job Seeker">Job Seeker</option>
+                            <option value="User">User</option>
                             <option value="Admin">Admin</option>
                         </select>
                     </div>
@@ -161,10 +171,11 @@ const AdminDashboard = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${user.role === 'Admin' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                                                user.role === 'Student' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                    'bg-green-500/10 text-green-400 border-green-500/20'
-                                                }`}>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                                                user.role === 'Admin'
+                                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                                    : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                            }`}>
                                                 {user.role}
                                             </span>
                                         </td>
@@ -213,15 +224,6 @@ const AdminDashboard = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Name</label>
-                                <input
-                                    type="text"
-                                    value={editingUser.name}
-                                    onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
-                                    className="w-full bg-slate-900 border border-slate-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500"
-                                />
-                            </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-1">Email</label>
@@ -240,21 +242,8 @@ const AdminDashboard = () => {
                                     onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
                                     className="w-full bg-slate-900 border border-slate-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500"
                                 >
-                                    <option value="Student">Student</option>
-                                    <option value="Job Seeker">Job Seeker</option>
+                                    <option value="User">User</option>
                                     <option value="Admin">Admin</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Status</label>
-                                <select
-                                    value={editingUser.status}
-                                    onChange={(e) => setEditingUser({ ...editingUser, status: e.target.value })}
-                                    className="w-full bg-slate-900 border border-slate-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500"
-                                >
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
                                 </select>
                             </div>
                         </div>
@@ -265,6 +254,38 @@ const AdminDashboard = () => {
                                 className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition-colors"
                             >
                                 Cancel
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const token = localStorage.getItem("access_token");
+
+                                        const response = await fetch(
+                                            `http://127.0.0.1:8000/admin/users/${editingUser.id}`,
+                                            {
+                                                method: "DELETE",
+                                                headers: {
+                                                    "Authorization": `Bearer ${token}`
+                                                }
+                                            }
+                                        );
+
+                                        if (!response.ok) {
+                                            console.error("Failed to delete user");
+                                            return;
+                                        }
+
+                                        const updatedUsers = users.filter(u => u.id !== editingUser.id);
+                                        setUsers(updatedUsers);
+                                        setEditingUser(null);
+
+                                    } catch (err) {
+                                        console.error("Error deleting user", err);
+                                    }
+                                }}
+                                className="w-full px-4 py-2 bg-red-600 hover:bg-red-500 rounded-lg font-medium transition-colors"
+                            >
+                                Remove User
                             </button>
                             <button
                                 onClick={handleSaveEdit}

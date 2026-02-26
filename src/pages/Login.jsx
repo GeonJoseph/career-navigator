@@ -1,3 +1,4 @@
+import { jwtDecode } from "jwt-decode";
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Compass } from 'lucide-react';
@@ -6,52 +7,49 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [role, setRole] = useState('Admin'); // Default role
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
 
-        // Shared User Logic
-        let users = JSON.parse(localStorage.getItem('users') || '[]');
+        try {
+            const response = await fetch("http://127.0.0.1:8000/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email,
+                    password
+                })
+            });
 
-        // Seed mock users if the list is empty
-        if (users.length === 0) {
-            const mockUsers = [
-                { id: 1, name: 'John Doe', email: 'john@example.com', password: 'password123', role: 'User', status: 'Active', joined: '2025-10-15' },
-                { id: 2, name: 'Jane Smith', email: 'jane@example.com', password: 'password123', role: 'User', status: 'Active', joined: '2025-11-20' },
-                { id: 3, name: 'Admin User', email: 'admin@careernavigator.io', password: 'admin123', role: 'Admin', status: 'Active', joined: '2025-09-01' },
-                { id: 4, name: 'Mike Brown', email: 'mike@example.com', password: 'password123', role: 'User', status: 'Inactive', joined: '2026-01-10' },
-            ];
-            localStorage.setItem('users', JSON.stringify(mockUsers));
-            users = mockUsers;
-        }
+            const data = await response.json();
 
-        const userIndex = users.findIndex(u => u.email === email && u.password === password);
-
-        if (userIndex !== -1) {
-            const loggedInUser = users[userIndex];
-
-            // Check if account is inactive
-            if (loggedInUser.status === 'Inactive') {
-                setError('Your account is currently inactive. Please contact the administrator.');
+            if (!response.ok) {
+                setError(data.detail || "Login failed");
                 return;
             }
 
-            // Update status to Active in shared list
-            users[userIndex].status = 'Active';
-            localStorage.setItem('users', JSON.stringify(users));
+            // ✅ Store tokens
+            localStorage.setItem("access_token", data.access_token);
+            localStorage.setItem("refresh_token", data.refresh_token);
 
-            localStorage.setItem('isAuthenticated', 'true');
-            localStorage.setItem('userRole', loggedInUser.role);
-            localStorage.setItem('userEmail', loggedInUser.email);
-            localStorage.setItem('userName', loggedInUser.name);
+            // ✅ Decode role from token
+            const decoded = jwtDecode(data.access_token);
+            const role = decoded.role;
 
-            navigate(loggedInUser.role === 'Admin' ? '/admin' : '/');
-        } else {
-            setError('Invalid email or password');
+            // ✅ Redirect based on role
+            if (role === "Admin") {
+                navigate("/admin");
+            } else {
+                navigate("/");
+            }
+        
+        } catch (err) {
+            setError("Server error. Try again.");
         }
     };
 
@@ -64,7 +62,7 @@ const Login = () => {
                     <Compass className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-3xl font-bold text-slate-900 mb-2">Career Navigator</h1>
-                <p className="text-slate-500">Sign in to your {role === 'Admin' ? 'admin' : ''} dashboard</p>
+                <p className="text-slate-500">Sign in to your account</p>
             </div>
 
             {/* Login Card */}
@@ -77,26 +75,6 @@ const Login = () => {
                     )}
 
                     <form onSubmit={handleLogin} className="space-y-5">
-                        {/* Role Selection */}
-                        <div>
-                            <label className="block text-sm font-bold text-slate-900 mb-2">Role</label>
-                            <div className="relative">
-                                <select
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                    className="w-full px-4 py-3 border border-blue-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none bg-white font-medium text-slate-900"
-                                >
-                                    <option value="Admin">Admin</option>
-                                    <option value="User">User</option>
-                                </select>
-                                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                    <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Username/Email */}
                         <div>
                             <label className="block text-sm font-bold text-slate-900 mb-2">Username or Email</label>
@@ -148,7 +126,7 @@ const Login = () => {
                                 <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
                                 <span className="text-sm text-slate-600">Remember me</span>
                             </label>
-                            <Link to="/forgot-password" class="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
+                            <Link to="/forgot-password" className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
                                 Forgot password?
                             </Link>
                         </div>

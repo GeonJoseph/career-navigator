@@ -74,12 +74,15 @@ class RefreshRequest(BaseModel):
 class LogoutRequest(BaseModel):
     refresh_token: str
 
+class UpdateRoleRequest(BaseModel):
+    role: str
+
 @app.get("/")
 def root():
     return {"message": "Backend running"}
 
 @app.post("/chat")
-def chat(request: ChatRequest):
+def chat(request: ChatRequest, current_user: User = Depends(get_current_user)):
     user_text = request.message.lower()
 
     # Very simple temporary logic
@@ -122,7 +125,10 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    access_token = create_access_token({"sub": new_user.email})
+    access_token = create_access_token({
+        "sub": new_user.email,
+        "role": new_user.role
+    })
     refresh_token = create_refresh_token({"sub": new_user.email})
 
     new_user.refresh_token = refresh_token
@@ -144,7 +150,10 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not verify_password(request.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    access_token = create_access_token({"sub": user.email})
+    access_token = create_access_token({
+        "sub": user.email,
+        "role": user.role
+    })
     refresh_token = create_refresh_token({"sub": user.email})
 
     # Store refresh token in DB (overwrite old one)
@@ -179,7 +188,10 @@ def refresh(request: RefreshRequest, db: Session = Depends(get_db)):
     if not user or user.refresh_token != request.refresh_token:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-    new_access_token = create_access_token({"sub": user.email})
+    new_access_token = create_access_token({
+        "sub": user.email,
+        "role": user.role
+    })
 
     return {
         "access_token": new_access_token,
@@ -223,3 +235,66 @@ def read_current_user(
         "name": current_user.name,
         "email": current_user.email
     }
+
+@app.get("/admin/users")
+def get_all_users(current_user: User = Security(get_current_user),
+                  db: Session = Depends(get_db)):
+
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    users = db.query(User).all()
+
+    return [
+        {
+            "id": u.id,
+            "name": u.name,
+            "email": u.email,
+            "role": u.role,
+            "status": "Active" if u.refresh_token else "Inactive",
+            "joined": u.created_at.strftime("%Y-%m-%d")
+        }
+        for u in users
+    ]
+
+@app.patch("/admin/users/{user_id}")
+def update_user_role(
+    user_id: int,
+    request: UpdateRoleRequest,
+    current_user: User = Security(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if request.role not in ["User", "Admin"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    user.role = request.role
+    db.commit()
+
+    return {"message": "Role updated successfully"}
+
+@app.delete("/admin/users/{user_id}")
+def delete_user(
+    user_id: int,
+    current_user: User = Security(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db.delete(user)
+    db.commit()
+
+    return {"message": "User deleted successfully"}

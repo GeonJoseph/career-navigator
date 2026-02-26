@@ -1,45 +1,61 @@
-import React, { useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { jwtDecode } from "jwt-decode";
+import React, { useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { logout } from "../services/authService";
 
 const Navbar = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const userRole = localStorage.getItem('userRole');
+    const accessToken = localStorage.getItem("access_token");
+    const isAuthenticated = !!accessToken;
 
-    // 👉 Auto redirect admin to admin dashboard
+    let userRole = null;
+    let userName = "U";
+
+    if (accessToken) {
+        try {
+            const decoded = jwtDecode(accessToken);
+            userRole = decoded.role;
+            userName = decoded.sub?.charAt(0).toUpperCase() || "U";
+        } catch (err) {
+            console.error("Invalid token");
+        }
+    }
+
     useEffect(() => {
-        if (userRole === 'Admin' && location.pathname !== '/admin') {
-            navigate('/admin', { replace: true });
+        if (userRole === "Admin" && location.pathname !== "/admin") {
+            navigate("/admin", { replace: true });
         }
     }, [userRole, location.pathname, navigate]);
 
-    let navItems = [];
+    const navItems =
+        userRole !== "Admin"
+            ? [
+                  { label: "Home", path: "/" },
+                  { label: "Profile", path: "/settings" },
+                  { label: "Bot", path: "/chat" },
+                  { label: "Results", path: "/results" },
+                  { label: "Courses", path: "/courses" },
+                  { label: "Jobs", path: "/applications" },
+              ]
+            : [];
 
-    // 👉 Only normal users get navbar pages
-    if (userRole !== 'Admin') {
-        navItems = [
-            { label: 'Home', path: '/' },
-            { label: 'Profile', path: '/settings' },
-            { label: 'Bot', path: '/chat' },
-            { label: 'Results', path: '/results' },
-            { label: 'Courses', path: '/courses' },
-            { label: 'Jobs', path: '/applications' },
-        ];
-    }
+    const handleLogout = async () => {
+        await logout();
+    };
 
     return (
         <nav className="bg-slate-900 text-white px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-12">
                 <Link
-                    to={userRole === 'Admin' ? '/admin' : '/'}
+                    to={userRole === "Admin" ? "/admin" : "/"}
                     className="text-xl font-bold text-white hover:text-blue-400 transition-colors"
                 >
                     Career Navigator
                 </Link>
 
-                {/* 👉 Admin sees NO page options */}
-                {userRole !== 'Admin' && (
+                {userRole !== "Admin" && (
                     <div className="hidden md:flex items-center gap-2">
                         {navItems.map((item) => {
                             const isActive = location.pathname === item.path;
@@ -48,10 +64,11 @@ const Navbar = () => {
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${isActive
-                                        ? 'bg-slate-800 text-blue-400 border border-slate-700'
-                                        : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                        }`}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                                        isActive
+                                            ? "bg-slate-800 text-blue-400 border border-slate-700"
+                                            : "text-slate-400 hover:text-white hover:bg-slate-800"
+                                    }`}
                                 >
                                     {item.label}
                                 </Link>
@@ -62,36 +79,17 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center gap-4">
-                {localStorage.getItem('isAuthenticated') === 'true' ? (
+                {isAuthenticated ? (
                     <div className="flex items-center gap-4">
                         <Link
                             to="/settings"
                             className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold hover:bg-blue-600 transition-colors cursor-pointer"
-                            title="View Profile"
                         >
-                            {localStorage.getItem('userName')
-                                ? localStorage.getItem('userName').charAt(0).toUpperCase()
-                                : 'U'}
+                            {userName}
                         </Link>
 
                         <button
-                            onClick={() => {
-                                // Sync logout status with Monitor Status System
-                                const userEmail = localStorage.getItem('userEmail');
-                                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                                const userIndex = users.findIndex(u => u.email === userEmail);
-
-                                if (userIndex !== -1) {
-                                    users[userIndex].status = 'Inactive';
-                                    localStorage.setItem('users', JSON.stringify(users));
-                                }
-
-                                localStorage.removeItem('isAuthenticated');
-                                localStorage.removeItem('userEmail');
-                                localStorage.removeItem('userName');
-                                localStorage.removeItem('userRole');
-                                navigate('/login');
-                            }}
+                            onClick={handleLogout}
                             className="text-slate-300 hover:text-white font-medium px-4 py-2 transition-colors"
                         >
                             Sign Out
@@ -100,14 +98,14 @@ const Navbar = () => {
                 ) : (
                     <>
                         <button
-                            onClick={() => navigate('/login')}
+                            onClick={() => navigate("/login")}
                             className="text-slate-300 hover:text-white font-medium px-4 py-2 transition-colors"
                         >
                             Login
                         </button>
 
                         <button
-                            onClick={() => navigate('/signup')}
+                            onClick={() => navigate("/signup")}
                             className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-6 py-2 rounded-full font-medium transition-colors"
                         >
                             Sign Up

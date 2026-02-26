@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart2, TrendingUp } from 'lucide-react';
+import { BarChart2 } from 'lucide-react';
 
 const Results = () => {
     const [recommendations, setRecommendations] = useState([]);
@@ -18,7 +18,7 @@ const Results = () => {
         <div className="space-y-8">
             <h1 className="text-4xl font-bold text-white">Your Assessment Results</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
                 <div className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50">
                     <div className="flex items-center gap-4 mb-6">
                         <div className="p-3 bg-blue-500/10 rounded-xl">
@@ -38,44 +38,6 @@ const Results = () => {
                                 </span>
                             </div>
                         ))}
-                    </div>
-                </div>
-
-                <div className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="p-3 bg-purple-500/10 rounded-xl">
-                            <TrendingUp className="text-purple-400" size={24} />
-                        </div>
-                        <h2 className="text-2xl font-bold text-white">Skill Gap Analysis</h2>
-                    </div>
-                    <div className="space-y-6">
-                        <div>
-                            <div className="flex justify-between mb-2">
-                                <span className="text-slate-300">React & Modern JS</span>
-                                <span className="text-blue-400">Advanced</span>
-                            </div>
-                            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-500 w-[90%]"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div className="flex justify-between mb-2">
-                                <span className="text-slate-300">Backend System Design</span>
-                                <span className="text-orange-400">Intermediate</span>
-                            </div>
-                            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                <div className="h-full bg-orange-500 w-[60%]"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div className="flex justify-between mb-2">
-                                <span className="text-slate-300">DevOps & CI/CD</span>
-                                <span className="text-slate-400">Beginner</span>
-                            </div>
-                            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                <div className="h-full bg-slate-500 w-[30%]"></div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
