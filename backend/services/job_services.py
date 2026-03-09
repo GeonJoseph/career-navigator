@@ -29,6 +29,15 @@ SUPPORTED_COUNTRIES = {
     "singapore": "sg", "sg": "sg",
 }
 
+def load_local_jobs():
+    """Load fallback job data from the local jobs.json file."""
+    try:
+        with open(DATA_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading local jobs: {e}")
+        return []
+
 def detect_country(location):
     if not location:
         return None # Return None for global search
@@ -111,18 +120,34 @@ def get_jobs(query, location=None, is_internship=False):
     loc = location.lower() if location else ""
     
     for job in local_jobs:
-        match_query = q in job["title"].lower() or q in job.get("description", "").lower()
-        match_loc = not loc or loc in job.get("location", "").lower()
+        title_lower = job["title"].lower()
+        desc_lower = job.get("description", "").lower()
+        job_loc_lower = job.get("location", "").lower()
         
-        if match_query and match_loc:
+        match_query = q in title_lower or q in desc_lower
+        match_loc = not loc or loc in job_loc_lower
+        
+        # If both query and location are provided, both must match
+        # If only location is provided, show all jobs in that location
+        # If only query is provided, show matching jobs from all locations
+        if loc and not q.strip():
+            should_include = match_loc
+        elif match_query and match_loc:
+            should_include = True
+        else:
+            should_include = False
+        
+        if should_include:
             results.append({
                 "id": job.get("id", job["title"]),
                 "company": job.get("company", "Company X"),
                 "title": job["title"],
                 "description": job.get("description", ""),
-                "location": job.get("location", "Unknown"),
-                "redirect_url": "#",
+                "location": job.get("location", "Remote"),
+                "salary_min": None,
+                "redirect_url": job.get("redirect_url", "#"),
                 "status": "Applied" if is_internship else "Available"
             })
     
-    return results[:10]
+    return results[:15]
+
