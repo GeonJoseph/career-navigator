@@ -1,0 +1,116 @@
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, ExternalLink, GraduationCap } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+
+const Internships = () => {
+    const [searchParams] = useSearchParams();
+    const queryParam = searchParams.get('q');
+
+    const [internships, setInternships] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState(queryParam || "Software Engineer");
+    const [location, setLocation] = useState("");
+
+    const fetchInternships = async (query, loc) => {
+        setLoading(true);
+        try {
+            const url = `http://localhost:8000/api/internships?q=${query}` + (loc ? `&loc=${loc}` : '');
+            const response = await fetch(url);
+            const data = await response.json();
+            setInternships(data);
+        } catch (error) {
+            console.error("Error fetching internships:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const query = queryParam || "Software Engineer";
+        setSearchTerm(query);
+        fetchInternships(query, location);
+    }, [queryParam]);
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        fetchInternships(searchTerm, location);
+    };
+
+    return (
+        <div className="space-y-8">
+            <h1 className="text-4xl font-bold text-white mb-2">Internship Opportunities</h1>
+            <p className="text-slate-400">Launch your career with real-world experience. Live search powered by Adzuna.</p>
+
+            <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-slate-800/30 p-4 rounded-2xl border border-slate-700/50">
+                <div className="md:col-span-6 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Role, field of study..."
+                        className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                </div>
+                <div className="md:col-span-4 relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                    <input
+                        type="text"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        placeholder="Location (city, country)..."
+                        className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                </div>
+                <button type="submit" className="md:col-span-2 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-500/20">
+                    Search
+                </button>
+            </form>
+
+            <div className="grid grid-cols-1 gap-4">
+                {loading ? (
+                    <div className="text-center py-20 text-slate-400 space-y-4">
+                        <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+                        <p>Finding the perfect internship...</p>
+                    </div>
+                ) : (
+                    <>
+                        {internships.map((intern, index) => (
+                            <div key={index} className="bg-slate-800/40 p-6 rounded-2xl border border-slate-700/40 hover:border-blue-500/30 transition-all group flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-2 bg-purple-500/10 rounded-lg">
+                                            <GraduationCap size={20} className="text-purple-400" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors uppercase tracking-tight">{intern.company}</h3>
+                                    </div>
+                                    <h4 className="text-lg text-slate-200 font-medium">{intern.title}</h4>
+                                    <div className="flex items-center gap-4 text-sm text-slate-400">
+                                        <span className="flex items-center gap-1.5"><MapPin size={14} /> {intern.location}</span>
+                                    </div>
+                                </div>
+
+                                <a
+                                    href={intern.redirect_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95 border border-slate-600"
+                                >
+                                    Get Notified & Apply
+                                    <ExternalLink size={16} />
+                                </a>
+                            </div>
+                        ))}
+                        {internships.length === 0 && (
+                            <div className="text-center py-20 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">
+                                <p className="text-slate-500">No internships found. Try searching for "Frontend" or "Marketing" in different locations.</p>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default Internships;
