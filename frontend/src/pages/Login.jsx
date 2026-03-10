@@ -1,11 +1,10 @@
 import { jwtDecode } from "jwt-decode";
 import React, { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Compass } from 'lucide-react';
 
 const Login = () => {
-    const location = useLocation();
-    const [email, setEmail] = useState(location.state?.email || '');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
@@ -48,6 +47,7 @@ const Login = () => {
             } else {
                 navigate("/");
             }
+        
         } catch (err) {
             setError("Server error. Try again.");
         }

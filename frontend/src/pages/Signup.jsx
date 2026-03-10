@@ -32,9 +32,12 @@ const Signup = () => {
                 return;
             }
 
-            alert("Registration completed! Please log in.");
-            navigate("/login", { state: { email } });
+            // Auto-login after signup
+            localStorage.setItem("access_token", data.access_token);
+            localStorage.setItem("refresh_token", data.refresh_token);
 
+            navigate("/");
+        
         } catch (err) {
             alert("Server error. Try again.");
         }

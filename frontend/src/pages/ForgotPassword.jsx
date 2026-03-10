@@ -10,34 +10,21 @@ const ForgotPassword = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleEmailSubmit = async (e) => {
+    const handleEmailSubmit = (e) => {
         e.preventDefault();
         setError('');
-        setIsLoading(true);
 
-        try {
-            const response = await fetch('http://localhost:8000/api/password-reset/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }),
-            });
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = users.find(u => u.email === email);
 
-            if (response.ok) {
-                setStep(2);
-            } else {
-                const data = await response.json();
-                setError(data.detail || 'No account found with this email address.');
-            }
-        } catch (err) {
-            setError('Server error. Please try again later.');
-        } finally {
-            setIsLoading(false);
+        if (user) {
+            setStep(2);
+        } else {
+            setError('No account found with this email address.');
         }
     };
 
-    const handlePasswordReset = async (e) => {
+    const handlePasswordReset = (e) => {
         e.preventDefault();
         setError('');
 
@@ -51,25 +38,15 @@ const ForgotPassword = () => {
             return;
         }
 
-        setIsLoading(true);
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const userIndex = users.findIndex(u => u.email === email);
 
-        try {
-            const response = await fetch('http://localhost:8000/api/password-reset/confirm', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password: newPassword }),
-            });
-
-            if (response.ok) {
-                setStep(3);
-            } else {
-                const data = await response.json();
-                setError(data.detail || 'Something went wrong. Please try again.');
-            }
-        } catch (err) {
-            setError('Server error. Please try again later.');
-        } finally {
-            setIsLoading(false);
+        if (userIndex !== -1) {
+            users[userIndex].password = newPassword;
+            localStorage.setItem('users', JSON.stringify(users));
+            setStep(3);
+        } else {
+            setError('Something went wrong. Please try again.');
         }
     };
 
@@ -112,10 +89,9 @@ const ForgotPassword = () => {
                             </div>
                             <button
                                 type="submit"
-                                disabled={isLoading}
-                                className={`w-full py-3 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-800 transition-colors shadow-lg shadow-blue-700/30 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                className="w-full py-3 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-800 transition-colors shadow-lg shadow-blue-700/30"
                             >
-                                {isLoading ? 'Processing...' : 'Continue'}
+                                Continue
                             </button>
                         </form>
                     )}
@@ -146,10 +122,9 @@ const ForgotPassword = () => {
                             </div>
                             <button
                                 type="submit"
-                                disabled={isLoading}
-                                className={`w-full py-3 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-800 transition-colors shadow-lg shadow-blue-700/30 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                className="w-full py-3 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-800 transition-colors shadow-lg shadow-blue-700/30"
                             >
-                                {isLoading ? 'Processing...' : 'Reset Password'}
+                                Reset Password
                             </button>
                         </form>
                     )}
