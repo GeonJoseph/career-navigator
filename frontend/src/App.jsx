@@ -11,6 +11,7 @@ import Courses from './pages/Courses';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './pages/AdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
+import Internships from './pages/Internships';
 
 function App() {
 
@@ -40,6 +41,7 @@ function App() {
           <Route path="settings" element={<Settings />} />
           <Route path="results" element={<Results />} />
           <Route path="courses" element={<Courses />} />
+          <Route path="internships" element={<Internships />} />
         </Route>
       </Route>
     </Routes>

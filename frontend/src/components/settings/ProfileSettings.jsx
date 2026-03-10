@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
+=======
+import { jwtDecode } from 'jwt-decode';
+>>>>>>> 368b1368cac1415e0ddfdeb1323fc4dafa34dc81
 
 const ProfileSettings = () => {
     const [formData, setFormData] = useState({
@@ -53,7 +57,25 @@ const ProfileSettings = () => {
                     {profilePic ? (
                         <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
+<<<<<<< HEAD
                         `${formData.firstName.charAt(0)}${formData.lastName.charAt(0)}`
+=======
+                        (() => {
+                            if (formData.firstName || formData.lastName) {
+                                return `${formData.firstName?.charAt(0) || ''}${formData.lastName?.charAt(0) || ''}`.toUpperCase();
+                            }
+                            const token = localStorage.getItem('access_token');
+                            if (token) {
+                                try {
+                                    const decoded = jwtDecode(token);
+                                    return decoded.sub?.charAt(0).toUpperCase() || "U";
+                                } catch (e) {
+                                    return "U";
+                                }
+                            }
+                            return "U";
+                        })()
+>>>>>>> 368b1368cac1415e0ddfdeb1323fc4dafa34dc81
                     )}
                 </div>
                 <div>

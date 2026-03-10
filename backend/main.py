@@ -9,6 +9,11 @@ from database import engine, SessionLocal
 from models import Base, User
 from jose import jwt, JWTError
 from auth import create_access_token, create_refresh_token, SECRET_KEY, ALGORITHM
+<<<<<<< HEAD
+=======
+from services.job_services import get_jobs
+from services.course_services import get_courses
+>>>>>>> 368b1368cac1415e0ddfdeb1323fc4dafa34dc81
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
@@ -77,6 +82,16 @@ class LogoutRequest(BaseModel):
 class UpdateRoleRequest(BaseModel):
     role: str
 
+<<<<<<< HEAD
+=======
+class PasswordResetVerifyRequest(BaseModel):
+    email: str
+
+class PasswordResetConfirmRequest(BaseModel):
+    email: str
+    password: str
+
+>>>>>>> 368b1368cac1415e0ddfdeb1323fc4dafa34dc81
 @app.get("/")
 def root():
     return {"message": "Backend running"}
@@ -297,4 +312,36 @@ def delete_user(
     db.delete(user)
     db.commit()
 
+<<<<<<< HEAD
     return {"message": "User deleted successfully"}
+=======
+    return {"message": "User deleted successfully"}
+
+@app.post("/api/password-reset/verify")
+def verify_reset_email(request: PasswordResetVerifyRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="No account found with this email address.")
+    return {"message": "Email verified"}
+
+@app.post("/api/password-reset/confirm")
+def confirm_password_reset(request: PasswordResetConfirmRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.hashed_password = hash_password(request.password)
+    db.commit()
+    return {"message": "Password updated successfully"}
+@app.get("/api/jobs")
+def fetch_jobs(q: str = "software engineer", loc: str = None):
+    return get_jobs(q, location=loc, is_internship=False)
+
+@app.get("/api/internships")
+def fetch_internships(q: str = "software engineer", loc: str = None):
+    return get_jobs(q, location=loc, is_internship=True)
+
+@app.get("/api/courses")
+def fetch_courses(q: str = "coding"):
+    return get_courses(q)
+>>>>>>> 368b1368cac1415e0ddfdeb1323fc4dafa34dc81

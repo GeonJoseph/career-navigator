@@ -32,6 +32,7 @@ const Navbar = () => {
     const navItems =
         userRole !== "Admin"
             ? [
+<<<<<<< HEAD
                   { label: "Home", path: "/" },
                   { label: "Profile", path: "/settings" },
                   { label: "Bot", path: "/chat" },
@@ -39,6 +40,16 @@ const Navbar = () => {
                   { label: "Courses", path: "/courses" },
                   { label: "Jobs", path: "/applications" },
               ]
+=======
+                { label: "Home", path: "/" },
+                { label: "Profile", path: "/settings" },
+                { label: "Bot", path: "/chat" },
+                { label: "Results", path: "/results" },
+                { label: "Courses", path: "/courses" },
+                { label: "Internships", path: "/internships" },
+                { label: "Jobs", path: "/applications" },
+            ]
+>>>>>>> 368b1368cac1415e0ddfdeb1323fc4dafa34dc81
             : [];
 
     const handleLogout = async () => {
@@ -64,11 +75,18 @@ const Navbar = () => {
                                 <Link
                                     key={item.path}
                                     to={item.path}
+<<<<<<< HEAD
                                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                                         isActive
                                             ? "bg-slate-800 text-blue-400 border border-slate-700"
                                             : "text-slate-400 hover:text-white hover:bg-slate-800"
                                     }`}
+=======
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${isActive
+                                            ? "bg-slate-800 text-blue-400 border border-slate-700"
+                                            : "text-slate-400 hover:text-white hover:bg-slate-800"
+                                        }`}
+>>>>>>> 368b1368cac1415e0ddfdeb1323fc4dafa34dc81
                                 >
                                     {item.label}
                                 </Link>
