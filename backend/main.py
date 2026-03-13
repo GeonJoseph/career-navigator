@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
-from fastapi import FastAPI, Depends, HTTPException, Security
+from fastapi import FastAPI, Depends, HTTPException, Security, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 
 from fastapi.security import OAuth2PasswordBearer
 from security import hash_password, verify_password
@@ -9,6 +10,8 @@ from database import engine, SessionLocal
 from models import Base, User
 from jose import jwt, JWTError
 from auth import create_access_token, create_refresh_token, SECRET_KEY, ALGORITHM
+from services.jsearch_service import search_jobs, search_internships
+from services.course_service import search_courses
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
@@ -18,8 +21,10 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
+    # Dev-only: allow any origin. We are not using cookies here (tokens are
+    # returned in JSON and stored by the frontend), so credentials are disabled.
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -76,6 +81,34 @@ class LogoutRequest(BaseModel):
 
 class UpdateRoleRequest(BaseModel):
     role: str
+
+class ProfileUpdateRequest(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    profile_photo: Optional[str] = None
+    current_title: Optional[str] = None
+    target_title: Optional[str] = None
+    experience_level: Optional[str] = None
+    skills: Optional[str] = None
+    interests: Optional[str] = None
+    location: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    portfolio_url: Optional[str] = None
+
+class ProfileResponse(BaseModel):
+    first_name: Optional[str]
+    last_name: Optional[str]
+    email: str
+    profile_photo: Optional[str]
+    name: str  # Original composite name
+    current_title: Optional[str]
+    target_title: Optional[str]
+    experience_level: Optional[str]
+    skills: Optional[str]
+    interests: Optional[str]
+    location: Optional[str]
+    linkedin_url: Optional[str]
+    portfolio_url: Optional[str]
 
 @app.get("/")
 def root():
@@ -298,3 +331,91 @@ def delete_user(
     db.commit()
 
     return {"message": "User deleted successfully"}
+
+
+# ────────────────────────────────────────────────────────────────
+# Realtime Jobs, Internships & Courses
+# ────────────────────────────────────────────────────────────────
+
+@app.get("/api/jobs")
+def get_jobs(
+    query: str = Query("", description="Job search query"),
+    location: str = Query("", description="Location filter"),
+    page: int = Query(1, ge=1, description="Page number"),
+    current_user: User = Depends(get_current_user),
+):
+    results = search_jobs(query=query, location=location, page=page)
+    return results
+
+
+@app.get("/api/internships")
+def get_internships(
+    query: str = Query("", description="Internship search query"),
+    location: str = Query("", description="Location filter"),
+    page: int = Query(1, ge=1, description="Page number"),
+    current_user: User = Depends(get_current_user),
+):
+    print(f"DEBUG: Received internship query='{query}' alias_q")
+    results = search_internships(query=query, location=location, page=page)
+    return results
+
+
+@app.get("/api/courses")
+def get_courses(
+    query: str = Query("", description="Course search query"),
+    current_user: User = Depends(get_current_user),
+):
+    results = search_courses(query=query)
+    return {"results": results}
+
+@app.get("/api/user/profile", response_model=ProfileResponse)
+def get_user_profile(current_user: User = Depends(get_current_user)):
+    return {
+        "first_name": current_user.first_name,
+        "last_name": current_user.last_name,
+        "email": current_user.email,
+        "profile_photo": current_user.profile_photo,
+        "name": current_user.name,
+        "current_title": current_user.current_title,
+        "target_title": current_user.target_title,
+        "experience_level": current_user.experience_level,
+        "skills": current_user.skills,
+        "interests": current_user.interests,
+        "location": current_user.location,
+        "linkedin_url": current_user.linkedin_url,
+        "portfolio_url": current_user.portfolio_url
+    }
+
+@app.put("/api/user/profile")
+def update_user_profile(request: ProfileUpdateRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if request.first_name is not None:
+        current_user.first_name = request.first_name
+    if request.last_name is not None:
+        current_user.last_name = request.last_name
+    if request.profile_photo is not None:
+        current_user.profile_photo = request.profile_photo
+    if request.current_title is not None:
+        current_user.current_title = request.current_title
+    if request.target_title is not None:
+        current_user.target_title = request.target_title
+    if request.experience_level is not None:
+        current_user.experience_level = request.experience_level
+    if request.skills is not None:
+        current_user.skills = request.skills
+    if request.interests is not None:
+        current_user.interests = request.interests
+    if request.location is not None:
+        current_user.location = request.location
+    if request.linkedin_url is not None:
+        current_user.linkedin_url = request.linkedin_url
+    if request.portfolio_url is not None:
+        current_user.portfolio_url = request.portfolio_url
+    
+    # Also update the original 'name' field for compatibility
+    if request.first_name or request.last_name:
+        fname = request.first_name if request.first_name else (current_user.first_name or "")
+        lname = request.last_name if request.last_name else (current_user.last_name or "")
+        current_user.name = f"{fname} {lname}".strip()
+    
+    db.commit()
+    return {"message": "Profile updated successfully"}

@@ -7,21 +7,40 @@ const Navbar = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const [profile, setProfile] = React.useState({ name: "U", photo: null });
     const accessToken = localStorage.getItem("access_token");
     const isAuthenticated = !!accessToken;
 
     let userRole = null;
-    let userName = "U";
 
     if (accessToken) {
         try {
             const decoded = jwtDecode(accessToken);
             userRole = decoded.role;
-            userName = decoded.sub?.charAt(0).toUpperCase() || "U";
         } catch (err) {
             console.error("Invalid token");
         }
     }
+
+    useEffect(() => {
+        if (accessToken) {
+            const fetchProfile = async () => {
+                try {
+                    const response = await fetch('http://127.0.0.1:8000/api/user/profile', {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setProfile({
+                            name: (data.first_name ? data.first_name.charAt(0) : (data.name ? data.name.charAt(0) : "U")).toUpperCase(),
+                            photo: data.profile_photo
+                        });
+                    }
+                } catch (e) { console.error(e); }
+            };
+            fetchProfile();
+        }
+    }, [accessToken]);
 
     useEffect(() => {
         if (userRole === "Admin" && location.pathname !== "/admin") {
@@ -32,13 +51,14 @@ const Navbar = () => {
     const navItems =
         userRole !== "Admin"
             ? [
-                  { label: "Home", path: "/" },
-                  { label: "Profile", path: "/settings" },
-                  { label: "Bot", path: "/chat" },
-                  { label: "Results", path: "/results" },
-                  { label: "Courses", path: "/courses" },
-                  { label: "Jobs", path: "/applications" },
-              ]
+                { label: "Home", path: "/" },
+                { label: "Profile", path: "/settings" },
+                { label: "Bot", path: "/chat" },
+                { label: "Results", path: "/results" },
+                { label: "Courses", path: "/courses" },
+                { label: "Internships", path: "/internships" },
+                { label: "Jobs", path: "/applications" },
+            ]
             : [];
 
     const handleLogout = async () => {
@@ -46,7 +66,8 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="bg-slate-900 text-white px-8 py-4 flex items-center justify-between">
+        <nav className="glass-navbar px-8 py-4 flex items-center justify-between">
+
             <div className="flex items-center gap-12">
                 <Link
                     to={userRole === "Admin" ? "/admin" : "/"}
@@ -64,11 +85,10 @@ const Navbar = () => {
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                                        isActive
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${isActive
                                             ? "bg-slate-800 text-blue-400 border border-slate-700"
                                             : "text-slate-400 hover:text-white hover:bg-slate-800"
-                                    }`}
+                                        }`}
                                 >
                                     {item.label}
                                 </Link>
@@ -83,9 +103,13 @@ const Navbar = () => {
                     <div className="flex items-center gap-4">
                         <Link
                             to="/settings"
-                            className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold hover:bg-blue-600 transition-colors cursor-pointer"
+                            className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-sm font-black text-white hover:bg-blue-700 transition-all cursor-pointer overflow-hidden border border-white/10 shadow-lg shadow-blue-500/20 active:scale-95"
                         >
-                            {userName}
+                            {profile.photo ? (
+                                <img src={profile.photo} alt="P" className="w-full h-full object-cover" />
+                            ) : (
+                                profile.name
+                            )}
                         </Link>
 
                         <button

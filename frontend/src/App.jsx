@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Results from './pages/Results';
 import Courses from './pages/Courses';
+import Internships from './pages/Internships';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './pages/AdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
@@ -40,6 +41,7 @@ function App() {
           <Route path="settings" element={<Settings />} />
           <Route path="results" element={<Results />} />
           <Route path="courses" element={<Courses />} />
+          <Route path="internships" element={<Internships />} />
         </Route>
       </Route>
     </Routes>

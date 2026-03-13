@@ -1,19 +1,26 @@
-import React, { useState } from 'react';
-import { User, Shield, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { User, Shield, ChevronRight, Briefcase } from 'lucide-react';
 import ProfileSettings from '../components/settings/ProfileSettings';
 import SecuritySettings from '../components/settings/SecuritySettings';
 
 const Settings = () => {
-    const [activeTab, setActiveTab] = useState('profile');
+    const [searchParams] = useSearchParams();
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab) setActiveTab(tab);
+    }, [searchParams]);
 
     const tabs = [
-        { id: 'profile', label: 'Profile', icon: User },
+        { id: 'profile', label: 'Personal Info', icon: User },
         { id: 'security', label: 'Security', icon: Shield },
     ];
 
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-slate-800">Settings</h1>
+            <h1 className="text-4xl font-black text-slate-950 tracking-tight">Settings</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {/* Sidebar Navigation */}
