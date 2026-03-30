@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean
 from sqlalchemy.sql import func
 from database import Base
 
@@ -10,6 +10,12 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     refresh_token = Column(String, nullable=True)
+    reset_password_token = Column(String, nullable=True)
+    reset_password_expire = Column(DateTime(timezone=True), nullable=True)
+    
+    # Email Verification
+    is_verified = Column(Boolean, default=False)
+    verification_code = Column(String, nullable=True)
     
     # Basic Profile
     first_name = Column(String, nullable=True)
@@ -23,8 +29,17 @@ class User(Base):
     skills = Column(Text, nullable=True)  # JSON or comma-separated
     interests = Column(Text, nullable=True)
     location = Column(String, nullable=True)
+    biggest_challenge = Column(Text, nullable=True)
+    dob = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+    languages = Column(String, nullable=True)
     linkedin_url = Column(String, nullable=True)
     portfolio_url = Column(String, nullable=True)
+
+    # Document-Aware Profile addition
+    user_type = Column(String, default="student") # "professional" or "student"
+    document_text = Column(Text, nullable=True)
+    document_filename = Column(String, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     role = Column(String, default="User")

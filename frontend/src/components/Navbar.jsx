@@ -1,5 +1,5 @@
 import { jwtDecode } from "jwt-decode";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../services/authService";
 
@@ -7,7 +7,7 @@ const Navbar = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [profile, setProfile] = React.useState({ name: "U", photo: null });
+    const [profile, setProfile] = useState({ name: "U", photo: null });
     const accessToken = localStorage.getItem("access_token");
     const isAuthenticated = !!accessToken;
 
@@ -35,6 +35,11 @@ const Navbar = () => {
                             name: (data.first_name ? data.first_name.charAt(0) : (data.name ? data.name.charAt(0) : "U")).toUpperCase(),
                             photo: data.profile_photo
                         });
+                    } else if (response.status === 401) {
+                        localStorage.removeItem("access_token");
+                        localStorage.removeItem("refresh_token");
+                        localStorage.removeItem("userRole");
+                        window.location.href = "/login";
                     }
                 } catch (e) { console.error(e); }
             };
@@ -47,6 +52,8 @@ const Navbar = () => {
             navigate("/admin", { replace: true });
         }
     }, [userRole, location.pathname, navigate]);
+
+
 
     const navItems =
         userRole !== "Admin"

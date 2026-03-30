@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { User, Shield, ChevronRight, Briefcase } from 'lucide-react';
+import { useSearchParams, useLocation } from 'react-router-dom';
+import { User, Shield, ChevronRight, Briefcase, AlertCircle } from 'lucide-react';
 import ProfileSettings from '../components/settings/ProfileSettings';
 import SecuritySettings from '../components/settings/SecuritySettings';
 
 const Settings = () => {
     const [searchParams] = useSearchParams();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
+    const message = location.state?.message;
 
     useEffect(() => {
         const tab = searchParams.get('tab');
@@ -14,44 +16,56 @@ const Settings = () => {
     }, [searchParams]);
 
     const tabs = [
-        { id: 'profile', label: 'Personal Info', icon: User },
-        { id: 'security', label: 'Security', icon: Shield },
+        { id: 'profile', label: 'Personal & Career', icon: User },
+        { id: 'security', label: 'Security & Login', icon: Shield },
     ];
 
     return (
-        <div className="space-y-6">
-            <h1 className="text-4xl font-black text-slate-950 tracking-tight">Settings</h1>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {/* Sidebar Navigation */}
-                <div className="md:col-span-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden h-fit">
-                    <nav className="flex flex-col">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center justify-between p-4 text-left transition-colors ${activeTab === tab.id
-                                        ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
-                                        : 'text-slate-600 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Icon size={20} />
-                                        <span className="font-medium">{tab.label}</span>
-                                    </div>
-                                    {activeTab === tab.id && <ChevronRight size={16} />}
-                                </button>
-                            );
-                        })}
-                    </nav>
+        <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-6xl mx-auto space-y-8">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-3xl font-black text-white tracking-tight">Account Settings</h1>
                 </div>
 
-                {/* Content Area */}
-                <div className="md:col-span-3 space-y-6">
-                    {activeTab === 'profile' && <ProfileSettings />}
-                    {activeTab === 'security' && <SecuritySettings />}
+                {message && (
+                    <div className="bg-yellow-500/10 text-yellow-400 p-4 rounded-xl text-sm font-medium border border-yellow-500/20 flex items-center gap-3 animate-in slide-in-from-top-2">
+                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                        {message}
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    {/* Sidebar Navigation */}
+                    <div className="md:col-span-1 h-fit">
+                        <nav className="flex flex-col gap-2">
+                            {tabs.map((tab) => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex items-center justify-between p-4 rounded-xl text-left transition-all border ${
+                                            isActive
+                                            ? 'bg-blue-600/20 text-blue-400 border-blue-500/30 shadow-md shadow-blue-900/20'
+                                            : 'border-transparent text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Icon size={18} className={isActive ? 'text-blue-400' : 'text-slate-500'} />
+                                            <span className="font-semibold text-sm">{tab.label}</span>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </nav>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="md:col-span-3 space-y-6">
+                        {activeTab === 'profile' && <ProfileSettings />}
+                        {activeTab === 'security' && <SecuritySettings />}
+                    </div>
                 </div>
             </div>
         </div>

@@ -26,8 +26,14 @@ const Chat = () => {
                 if (response.ok) {
                     const data = await response.json();
                     const name = data.first_name || data.name || "friend";
-                    const target = data.target_title ? ` your goal to become a ${data.target_title}` : "your career path";
-                    greeting = `Hi ${name}! ✨ I'm ready to help you with ${target}. Let's start by discussing your background. How can I assist you today?`;
+                    
+                    let target = "your career path";
+                    if (data.document_filename) {
+                        const docType = data.user_type === 'professional' ? 'resume' : 'marklist';
+                        target = `your career path based on your uploaded ${docType}`;
+                    }
+
+                    greeting = `Hi ${name}! ✨ I'm ready to help you with ${target}. My AI core has fully analyzed your document. How can I assist you today?`;
                 }
             } catch (e) { console.error(e); }
             
