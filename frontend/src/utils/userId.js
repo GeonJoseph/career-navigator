@@ -1,9 +1,9 @@
 export function getUserId() {
-  let userId = localStorage.getItem("chat_user_id");
+  let userId = localStorage.getItem("user_id");
 
   if (!userId) {
-    userId = "user_" + Math.random().toString(36).substring(2);
-    localStorage.setItem("chat_user_id", userId);
+    userId = "user_" + Date.now() + "_" + Math.random();
+    localStorage.setItem("user_id", userId);
   }
 
   return userId;

@@ -13,3 +13,11 @@ def cosine(a, b):
         return 0.0
 
     return np.dot(a, b) / denom
+
+def get_combined_interests(user):
+    parts = []
+    if user.skills:
+        parts.append(user.skills)
+    if user.interests:
+        parts.append(user.interests)
+    return ", ".join(parts)

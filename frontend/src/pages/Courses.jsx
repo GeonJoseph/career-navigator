@@ -2,13 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, Star, Clock, ExternalLink } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
+
+function getCareerFromStorage() {
+    try {
+        const saved = JSON.parse(localStorage.getItem("careerResults"));
+        return saved?.[0] || "";
+    } catch {
+        return "";
+    }
+}
+
 const Courses = () => {
     const [searchParams] = useSearchParams();
     const queryParam = searchParams.get('q');
 
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState(queryParam || "React");
+    const [searchTerm, setSearchTerm] = useState(
+    queryParam || getCareerFromStorage() || "React"
+    );
+    const [bookmarks, setBookmarks] = useState([]);
 
     const fetchCourses = async (query) => {
         setLoading(true);
@@ -39,16 +52,100 @@ const Courses = () => {
         }
     };
 
+    const fetchBookmarks = async () => {
+        const token = localStorage.getItem("access_token");
+
+        try {
+            const res = await fetch("http://127.0.0.1:8000/api/bookmarks", {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+            });
+
+            const data = await res.json();
+            setBookmarks(data);
+
+        } catch (err) {
+            console.error("Error fetching bookmarks:", err);
+        }
+        };
+
+    const isBookmarked = (course) => {
+    return bookmarks.some(b => b.course_url === course.url);
+    };
+
+    const toggleBookmark = async (course) => {
+        const token = localStorage.getItem("access_token");
+
+        const exists = isBookmarked(course);
+
+        try {
+            if (exists) {
+            // DELETE bookmark
+            await fetch("http://127.0.0.1:8000/api/bookmarks", {
+                method: "DELETE",
+                headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                course_url: course.url
+                })
+            });
+
+            // 🔥 UPDATE UI
+            setBookmarks(prev =>
+                prev.filter(b => b.course_url !== course.url)
+            );
+
+            } else {
+            // ADD bookmark
+            const res = await fetch("http://127.0.0.1:8000/api/bookmarks", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                course_title: course.title,
+                course_url: course.url,
+                provider: course.provider
+                })
+            });
+
+            const saved = await res.json();
+
+            // 🔥 UPDATE UI
+            setBookmarks(prev => [...prev, saved]);
+            }
+
+        } catch (err) {
+            console.error("Bookmark error:", err);
+        }
+        };
+
     useEffect(() => {
-        const query = queryParam || "React";
+        const query = queryParam || getCareerFromStorage() || "React";
         setSearchTerm(query);
         fetchCourses(query);
+        fetchBookmarks(); // 🔥 ADD THIS LINE
     }, [queryParam]);
+
+    useEffect(() => {
+        fetchBookmarks();
+    }, []);
 
     const handleSearch = (e) => {
         e.preventDefault();
         fetchCourses(searchTerm);
     };
+
+    const sortedCourses = [...courses].sort((a, b) => {
+        const aBookmarked = isBookmarked(a);
+        const bBookmarked = isBookmarked(b);
+
+        return bBookmarked - aBookmarked; 
+    });
 
     return (
         <div className="space-y-8">
@@ -71,8 +168,8 @@ const Courses = () => {
                 <div className="text-center py-12 text-slate-400">Loading courses...</div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {courses.map((course, index) => (
-                        <div key={index} className="glass-card p-6 rounded-3xl group flex flex-col hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
+                    {sortedCourses.map((course, index) => (
+                        <div key={index} className="glass-card p-6 rounded-3xl group flex flex-col relative hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
                             <div className="inline-block px-3 py-1 rounded-full text-xs font-black mb-4 bg-blue-500/10 text-blue-400 w-fit tracking-wider uppercase">
                                 {course.category || "General"}
                             </div>
@@ -84,9 +181,28 @@ const Courses = () => {
                                     <Clock size={16} className="text-slate-400" />
                                     <span>{course.duration}</span>
                                 </div>
-                                <div className="flex items-center gap-1.5 text-amber-400">
-                                    <Star size={16} fill="currentColor" />
-                                    <span className="font-bold">{course.rating}</span>
+                                <div className="flex items-center gap-2">
+    
+                                    <button
+                                        onClick={() => {
+                                            console.log("CLICKED");
+                                            toggleBookmark(course);
+                                        }}
+                                        className="p-1 hover:scale-110 transition-transform cursor-pointer z-10"
+                                    >
+                                        <Star
+                                            size={18}
+                                            className={
+                                                isBookmarked(course)
+                                                    ? "text-yellow-400 fill-yellow-400"
+                                                    : "text-slate-400"
+                                            }
+                                        />
+                                    </button>
+
+                                    <span className="font-bold text-amber-400">
+                                        {course.rating}
+                                    </span>
                                 </div>
                             </div>
 

@@ -9,16 +9,9 @@ const ProfileSettings = () => {
         profile_photo: '',
         user_type: 'student',
         document_filename: '',
-        current_title: '',
-        target_title: '',
-        experience_level: 'junior',
         skills: '',
         dob: '',
-        phone_number: '',
-        country_code: '',
-        languages: '',
         interests: '',
-        linkedin_url: ''
     });
     const [originalData, setOriginalData] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -47,22 +40,9 @@ const ProfileSettings = () => {
                     profile_photo: data.profile_photo || '',
                     user_type: data.user_type || 'student',
                     document_filename: data.document_filename || '',
-                    current_title: data.current_title || '',
-                    target_title: data.target_title || '',
-                    experience_level: data.experience_level || 'junior',
                     skills: data.skills || '',
                     dob: data.dob || '',
-                    phone_number: data.phone_number ? 
-                        (data.phone_number.startsWith('+') && data.phone_number.includes(' ') 
-                            ? data.phone_number.substring(data.phone_number.indexOf(' ') + 1) 
-                            : data.phone_number) 
-                        : '',
-                    country_code: data.phone_number && data.phone_number.startsWith('+') && data.phone_number.includes(' ')
-                        ? data.phone_number.split(' ')[0]
-                        : '',
-                    languages: data.languages || '',
-                    interests: data.interests || '',
-                    linkedin_url: data.linkedin_url || ''
+                    interests: data.interests || ''
                 };
                 setProfileData(processedData);
                 setOriginalData(processedData);
@@ -81,13 +61,7 @@ const ProfileSettings = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        // Strip non-numeric from phone_number
-        if (name === 'phone_number') {
-            const numericValue = value.replace(/[^\d() -]/g, '');
-            setProfileData(prev => ({ ...prev, [name]: numericValue }));
-        } else {
-            setProfileData(prev => ({ ...prev, [name]: value }));
-        }
+        setProfileData(prev => ({ ...prev, [name]: value }));
         setSuccess(false);
     };
 
@@ -130,17 +104,19 @@ const ProfileSettings = () => {
     };
 
     const hasChanges = () => {
-        if (!originalData) return false;
-        if (selectedFile !== null) return true; // new document to upload
+        if (!originalData) return true;
+        if (selectedFile !== null) return true;
         return JSON.stringify(profileData) !== JSON.stringify(originalData);
     };
 
-    const isFormValid = () => {
-        return profileData.first_name.trim() !== '' && 
-            profileData.last_name.trim() !== '' && 
-            profileData.country_code.trim() !== '' &&
-            profileData.phone_number.trim() !== '';
-    };
+const isFormValid = () => {
+    return (
+        profileData.first_name.trim() !== '' &&
+        profileData.last_name.trim() !== '' &&
+        profileData.skills.trim() !== '' &&
+        profileData.interests.trim() !== ''
+    );
+};
 
     const handleSave = async () => {
         setLoading(true);
@@ -152,18 +128,9 @@ const ProfileSettings = () => {
             formData.append('first_name', profileData.first_name);
             formData.append('last_name', profileData.last_name);
             formData.append('user_type', profileData.user_type);
-            formData.append('current_title', profileData.current_title);
-            formData.append('target_title', profileData.target_title);
-            formData.append('experience_level', profileData.experience_level);
             formData.append('skills', profileData.skills);
             formData.append('dob', profileData.dob);
-            
-            const fullPhoneNumber = profileData.country_code ? `${profileData.country_code} ${profileData.phone_number.replace(/^\+?\d+\s*/, '')}` : profileData.phone_number;
-            formData.append('phone_number', fullPhoneNumber);
-            
-            formData.append('languages', profileData.languages);
             formData.append('interests', profileData.interests);
-            formData.append('linkedin_url', profileData.linkedin_url);
             
             if (profileData.profile_photo !== originalData.profile_photo) {
                 formData.append('profile_photo', profileData.profile_photo);
@@ -292,45 +259,17 @@ const ProfileSettings = () => {
                                     className="w-full px-4 py-2.5 bg-slate-950/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-200 text-sm font-medium placeholder:text-slate-500"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-300">Phone Number <span className="text-red-500">*</span></label>
-                                <div className="flex gap-2">
-                                    <div className="relative w-1/3">
-                                        <select
-                                            name="country_code"
-                                            value={profileData.country_code}
-                                            onChange={handleChange}
-                                            className="w-full px-3 py-2.5 bg-slate-950/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-200 text-sm font-medium outline-none appearance-none pr-8"
-                                        >
-                                            <option value="">+ Ext</option>
-                                            <option value="+1">+1 (US/CA)</option>
-                                            <option value="+44">+44 (UK)</option>
-                                            <option value="+91">+91 (IN)</option>
-                                            <option value="+61">+61 (AU)</option>
-                                            <option value="+81">+81 (JP)</option>
-                                            <option value="+86">+86 (CN)</option>
-                                            <option value="+49">+49 (DE)</option>
-                                            <option value="+33">+33 (FR)</option>
-                                            <option value="+971">+971 (AE)</option>
-                                        </select>
-                                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                                            <ChevronDown className="w-4 h-4" />
-                                        </div>
-                                    </div>
-                                    <input
-                                        type="tel" name="phone_number" value={profileData.phone_number} onChange={handleChange}
-                                        className="w-2/3 px-4 py-2.5 bg-slate-950/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-200 text-sm font-medium placeholder:text-slate-500 outline-none"
-                                        placeholder="(xxx) xxx-xxxx"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-300">Languages Spoken</label>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="block text-sm font-semibold text-slate-300">
+                                    Skills <span className="text-red-500">*</span>
+                                </label>
                                 <input
-                                    type="text" name="languages" value={profileData.languages} onChange={handleChange}
+                                    type="text"
+                                    name="skills"
+                                    value={profileData.skills}
+                                    onChange={handleChange}
                                     className="w-full px-4 py-2.5 bg-slate-950/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-200 text-sm font-medium placeholder:text-slate-500"
-                                    placeholder="English, Spanish, etc."
+                                    placeholder="Python, React, SQL..."
                                 />
                             </div>
                             <div className="space-y-2 md:col-span-2">

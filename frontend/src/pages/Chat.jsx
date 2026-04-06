@@ -13,7 +13,12 @@ function extractCareerFromText(text) {
 }
 
 const Chat = () => {
-    const userId = getUserId();
+    const [userId, setUserId] = useState(null);
+
+    useEffect(() => {
+      const id = getUserId();
+      setUserId(id);
+    }, []);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -25,20 +30,55 @@ const Chat = () => {
 
     const navigate = useNavigate();
 
+    // 🔥 ADD THIS RIGHT BELOW
+    const startNewChat = () => {
+      localStorage.removeItem("chatMessages");
+      localStorage.removeItem("user_id");
+
+      // Optional: also clear results
+      localStorage.removeItem("careerResults");
+
+      window.location.reload();
+    };
+    
     useEffect(() => {
-        setMessages([
-            {
-                id: 1,
-                text: "Hi! 👋 Tell me about your interests and I’ll help you find the right career path.",
-                sender: "bot",
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }
-        ]);
+      const savedMessages = localStorage.getItem("chatMessages");
+
+      if (savedMessages) {
+        try {
+          setMessages(JSON.parse(savedMessages));
+        } catch {
+          localStorage.removeItem("chatMessages");
+        }
+      } else {
+        const initial = [
+          {
+            id: 1,
+            text: "Hi! 👋 Tell me about your interests and I’ll help you find the right career path.",
+            sender: "bot",
+            timestamp: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit"
+            })
+          }
+        ];
+
+        setMessages(initial);
+        localStorage.setItem("chatMessages", JSON.stringify(initial));
+      }
     }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("chatMessages", JSON.stringify(messages));
+    }
+  }, [messages]);
 
     const handleSend = async (e) => {
         e.preventDefault();
         if (!input.trim()) return;
+
+        if (!userId) return;
 
         const currentInput = input;
         setInput('');
@@ -73,7 +113,6 @@ const Chat = () => {
             const data = await response.json();
             setIsTyping(false);
 
-            console.log("API RESPONSE:", data);
 
             // ✅ SAFE TEXT EXTRACTION
             const botText =
@@ -111,11 +150,6 @@ const Chat = () => {
                 }),
             };
 
-
-            console.log("FINAL DATA:", finalData);
-            console.log("isFinal:", isFinal);
-            console.log("careerName:", careerName);
-            console.log("STORED:", JSON.stringify([careerName]));
 
             // ✅ UPDATE UI FIRST
             if (isFinal) {
@@ -159,15 +193,28 @@ const Chat = () => {
             <div className="absolute bottom-0 -right-20 w-96 h-96 bg-purple-600/10 blur-[120px] rounded-full"></div>
 
             {/* HEADER */}
-            <div className="relative z-10 px-8 py-6 border-b border-white/5 bg-white/5 backdrop-blur-md flex items-center gap-4">
+            <div className="relative z-10 px-8 py-6 border-b border-white/5 bg-white/5 backdrop-blur-md flex items-center justify-between">
+
+              <div className="flex items-center gap-4">
                 <div className="p-3 bg-blue-600 rounded-2xl">
-                    <Bot className="text-white w-6 h-6" />
+                  <Bot className="text-white w-6 h-6" />
                 </div>
+
                 <div>
-                    <h2 className="text-xl font-bold text-white">
-                        Career AI <Sparkles size={16} className="inline text-yellow-400" />
-                    </h2>
+                  <h2 className="text-xl font-bold text-white">
+                    Career AI <Sparkles size={16} className="inline text-yellow-400" />
+                  </h2>
                 </div>
+              </div>
+
+              {/* 🔥 NEW BUTTON */}
+              <button
+                onClick={startNewChat}
+                className="px-4 py-2 text-sm bg-red-500/20 border border-red-400/30 text-red-300 rounded-xl hover:bg-red-500/30 transition"
+              >
+                New Chat
+              </button>
+
             </div>
 
             {/* CHAT */}

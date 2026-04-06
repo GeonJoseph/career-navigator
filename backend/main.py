@@ -33,7 +33,12 @@ from services.chatbot.state import create_initial_state
 from services.chatbot.model import load_model
 from services.chatbot.data_loader import load_nodes
 
+from routes import bookmarks
+from models import Bookmark, User
+
 app = FastAPI()
+
+app.include_router(bookmarks.router)
 
 # 🔥 simple in-memory state (later replace with DB/user session)
 user_states = {}
@@ -48,10 +53,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    # Dev-only: allow any origin. We are not using cookies here (tokens are
-    # returned in JSON and stored by the frontend), so credentials are disabled.
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=["http://localhost:5173"],  # React app
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -91,6 +94,15 @@ def get_current_user(token: str = Depends(oauth2_scheme),
         raise credentials_exception
 
     return user
+
+def is_profile_complete(user: User):
+    return all([
+        user.first_name,
+        user.last_name,
+        user.user_type,
+        user.skills,
+        user.interests
+    ])
 
 class ChatRequest(BaseModel):
     user_id: str
@@ -180,15 +192,11 @@ class ProfileResponse(BaseModel):
     name: str
     user_type: Optional[str]
     document_filename: Optional[str]
-    current_title: Optional[str]
-    experience_level: Optional[str]
     skills: Optional[str]
     dob: Optional[str]
-    phone_number: Optional[str]
     location: Optional[str]
-    languages: Optional[str]
     interests: Optional[str]
-    linkedin_url: Optional[str]
+    is_profile_complete: bool
 
 @app.get("/")
 def root():
@@ -334,11 +342,14 @@ def login(request: Request, login_req: LoginRequest, background_tasks: Backgroun
         }
 
     access_token = create_access_token({
-        "sub": user.email,
+        "sub": str(user.id),   # 🔥 FIXED
         "role": user.role
     })
     expires_delta = timedelta(days=30) if login_req.remember_me else timedelta(days=1)
-    refresh_token = create_refresh_token({"sub": user.email}, expires_delta=expires_delta)
+    refresh_token = create_refresh_token(
+        {"sub": str(user.id)},
+        expires_delta=expires_delta
+    )
     
     user.refresh_token = refresh_token
     db.commit()
@@ -623,7 +634,7 @@ async def google_callback(code: str = None, error: str = None, db: Session = Dep
         user.refresh_token = refresh_token
         db.commit()
         
-        prof_comp = "true" if (user.first_name and user.last_name and user.phone_number and user.document_filename) else "false"
+        prof_comp = "true" if is_profile_complete(user) else "false"
         return RedirectResponse(url=f"http://localhost:5173/auth/callback?access_token={jwt_token}&refresh_token={refresh_token}&profile_completed={prof_comp}")
 
 @app.get("/auth/github/login")
@@ -742,6 +753,65 @@ def get_courses(
     results = search_courses(query=query)
     return {"results": results}
 
+@app.get("/api/bookmarks")
+def get_bookmarks(request: Request, db: Session = Depends(get_db)):
+    auth = request.headers.get("Authorization")
+    token = auth.split(" ")[1]
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    email = payload.get("sub")
+
+    user = db.query(User).filter(User.email == email).first()
+
+    bookmarks = db.query(Bookmark).filter(Bookmark.user_id == user.id).all()
+
+    return bookmarks
+
+@app.post("/api/bookmarks")
+async def add_bookmark(request: Request, db: Session = Depends(get_db)):
+    auth = request.headers.get("Authorization")
+    token = auth.split(" ")[1]
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    email = payload.get("sub")
+
+    user = db.query(User).filter(User.email == email).first()
+
+    data = await request.json()
+
+    bookmark = Bookmark(
+        user_id=user.id,
+        course_title=data["title"],
+        course_url=data["url"],
+        provider=data.get("provider", "")
+    )
+
+    db.add(bookmark)
+    db.commit()
+
+    return {"message": "Bookmarked"}
+
+@app.delete("/api/bookmarks/{bookmark_id}")
+def delete_bookmark(bookmark_id: int, request: Request, db: Session = Depends(get_db)):
+    auth = request.headers.get("Authorization")
+    token = auth.split(" ")[1]
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    email = payload.get("sub")
+
+    user = db.query(User).filter(User.email == email).first()
+
+    bookmark = db.query(Bookmark).filter(
+        Bookmark.id == bookmark_id,
+        Bookmark.user_id == user.id
+    ).first()
+
+    if bookmark:
+        db.delete(bookmark)
+        db.commit()
+
+    return {"message": "Deleted"}
+
 @app.get("/api/user/profile", response_model=ProfileResponse)
 def get_user_profile(current_user: User = Depends(get_current_user)):
     return {
@@ -752,15 +822,11 @@ def get_user_profile(current_user: User = Depends(get_current_user)):
         "name": getattr(current_user, "name", ""),
         "user_type": getattr(current_user, "user_type", "student"),
         "document_filename": getattr(current_user, "document_filename", ""),
-        "current_title": getattr(current_user, "current_title", ""),
-        "experience_level": getattr(current_user, "experience_level", ""),
         "skills": getattr(current_user, "skills", ""),
         "dob": getattr(current_user, "dob", ""),
-        "phone_number": getattr(current_user, "phone_number", ""),
         "location": getattr(current_user, "location", ""),
-        "languages": getattr(current_user, "languages", ""),
         "interests": getattr(current_user, "interests", ""),
-        "linkedin_url": getattr(current_user, "linkedin_url", "")
+        "is_profile_complete": is_profile_complete(current_user)
     }
 
 @app.put("/api/user/profile")
@@ -769,15 +835,10 @@ async def update_user_profile(
     last_name: Optional[str] = Form(None),
     user_type: Optional[str] = Form(None),
     profile_photo: Optional[str] = Form(None),
-    current_title: Optional[str] = Form(None),
-    experience_level: Optional[str] = Form(None),
     skills: Optional[str] = Form(None),
     dob: Optional[str] = Form(None),
-    phone_number: Optional[str] = Form(None),
     location: Optional[str] = Form(None),
-    languages: Optional[str] = Form(None),
     interests: Optional[str] = Form(None),
-    linkedin_url: Optional[str] = Form(None),
     document: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -790,24 +851,14 @@ async def update_user_profile(
         current_user.user_type = user_type
     if profile_photo is not None:
         current_user.profile_photo = profile_photo
-    if current_title is not None:
-        current_user.current_title = current_title
-    if experience_level is not None:
-        current_user.experience_level = experience_level
     if skills is not None:
         current_user.skills = skills
     if dob is not None:
         current_user.dob = dob
-    if phone_number is not None:
-        current_user.phone_number = phone_number
     if location is not None:
         current_user.location = location
-    if languages is not None:
-        current_user.languages = languages
     if interests is not None:
         current_user.interests = interests
-    if linkedin_url is not None:
-        current_user.linkedin_url = linkedin_url
 
     if document and hasattr(document, "filename") and document.filename:
         current_user.document_filename = document.filename
@@ -840,4 +891,3 @@ def change_password(request: ChangePasswordRequest, current_user: User = Depends
     db.commit()
     
     return {"message": "Password updated successfully"}
-

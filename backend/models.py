@@ -23,18 +23,10 @@ class User(Base):
     profile_photo = Column(String, nullable=True)
     
     # Professional Profile
-    current_title = Column(String, nullable=True)
-    target_title = Column(String, nullable=True)
-    experience_level = Column(String, nullable=True)
     skills = Column(Text, nullable=True)  # JSON or comma-separated
     interests = Column(Text, nullable=True)
     location = Column(String, nullable=True)
-    biggest_challenge = Column(Text, nullable=True)
     dob = Column(String, nullable=True)
-    phone_number = Column(String, nullable=True)
-    languages = Column(String, nullable=True)
-    linkedin_url = Column(String, nullable=True)
-    portfolio_url = Column(String, nullable=True)
 
     # Document-Aware Profile addition
     user_type = Column(String, default="student") # "professional" or "student"
@@ -43,3 +35,13 @@ class User(Base):
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     role = Column(String, default="User")
+
+class Bookmark(Base):
+    __tablename__ = "bookmarks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False)
+    course_title = Column(String, nullable=False)
+    course_url = Column(String, nullable=False)
+    provider = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

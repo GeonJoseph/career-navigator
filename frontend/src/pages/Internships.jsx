@@ -2,13 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, ExternalLink, GraduationCap } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
+
+function getCareerFromStorage() {
+    try {
+        const saved = JSON.parse(localStorage.getItem("careerResults"));
+        return saved?.[0] || "";
+    } catch {
+        return "";
+    }
+}
+
 const Internships = () => {
     const [searchParams] = useSearchParams();
     const queryParam = searchParams.get('q');
 
     const [internships, setInternships] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState(queryParam || "Software Engineer");
+    const [searchTerm, setSearchTerm] = useState(
+    queryParam || getCareerFromStorage() || "Software Engineer"
+    );
     const [location, setLocation] = useState("");
 
     const fetchInternships = async (query, loc) => {
@@ -42,7 +54,7 @@ const Internships = () => {
     };
 
     useEffect(() => {
-        const query = queryParam || "Software Engineer";
+        const query = queryParam || getCareerFromStorage() || "Software Engineer";
         setSearchTerm(query);
         fetchInternships(query, location);
     }, [queryParam]);
