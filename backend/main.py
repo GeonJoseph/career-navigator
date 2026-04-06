@@ -8,7 +8,6 @@ import httpx
 import os
 import io
 import PyPDF2
-from google import genai
 import re
 import secrets
 import smtplib
@@ -26,12 +25,22 @@ from jose import jwt, JWTError
 from auth import create_access_token, create_refresh_token, SECRET_KEY, ALGORITHM
 from services.jsearch_service import search_jobs, search_internships
 from services.course_service import search_courses
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+from services.chatbot.controller import process_input
+from services.chatbot.state import create_initial_state
+from services.chatbot.model import load_model
+from services.chatbot.data_loader import load_nodes
+
+app = FastAPI()
+
+# 🔥 simple in-memory state (later replace with DB/user session)
+user_states = {}
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 Base.metadata.create_all(bind=engine)
-
-app = FastAPI()
 
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
@@ -46,6 +55,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 🔥 LOAD ONCE (GLOBAL)
+nodes = load_nodes()
+model = load_model()
 
 def get_db():
     db = SessionLocal()
@@ -80,6 +93,7 @@ def get_current_user(token: str = Depends(oauth2_scheme),
     return user
 
 class ChatRequest(BaseModel):
+    user_id: str
     message: str
 
 class RegisterRequest(BaseModel):
@@ -181,51 +195,16 @@ def root():
     return {"message": "Backend running"}
 
 @app.post("/chat")
-async def chat(request: ChatRequest, current_user: User = Depends(get_current_user)):
-    user_text = request.message
-    
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        return {"response": "Error: GEMINI_API_KEY is not set in backend.", "recommendations": []}
-    
-    
-    
-    first_name = getattr(current_user, "first_name", "") or ""
-    last_name = getattr(current_user, "last_name", "") or ""
-    user_full_name = f"{first_name} {last_name}".strip() or current_user.name
-    
-    system_prompt = (
-        f"You are an expert Career Guidance Assistant. You are talking to a user named {user_full_name}. "
-        f"Their user classification is: {current_user.user_type}. "
-    )
-    
-    if current_user.document_text:
-        doc_type = "resume" if current_user.user_type == "professional" else "marklist"
-        system_prompt += f"Here is the exact parsed text from their uploaded {doc_type}: \n{current_user.document_text}\n"
-    if getattr(current_user, "dob", None):
-        system_prompt += f"Their Date of Birth is: {current_user.dob}\n"
-    if getattr(current_user, "phone_number", None):
-        system_prompt += f"Their Phone Number is: {current_user.phone_number}\n"
-    if getattr(current_user, "location", None):
-        system_prompt += f"Their current location is: {current_user.location}\n"
-    if getattr(current_user, "languages", None):
-        system_prompt += f"They speak the following languages: {current_user.languages}\n"
-    if getattr(current_user, "interests", None):
-        system_prompt += f"Their personal bio and hobbies are: {current_user.interests}\n"
-    
-    system_prompt += "\nCRITICAL INSTRUCTION: You MUST actively analyze and deeply consider all provided profile intelligence (including their Phone Number, Languages, Hobbies/Passions, and Document Context) to generate your response. Your advice must be highly personalized, situation-aware, and tailored specifically to this user's unique background. Write cleanly, spacing out bullet points. Do not explicitly state that you read their profile or document; simply speak naturally as an expert mentor who already knows them well."
-    
-    try:
-        client = genai.Client(api_key=api_key)
-        prompt_with_context = f"System Context:\n{system_prompt}\n\nUser's Message: {user_text}"
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt_with_context,
-        )
-        return {"response": response.text, "recommendations": []}
-    except Exception as e:
-        print("Gemini API Error:", e)
-        return {"response": "I'm having trouble connecting to my AI core right now. Please try again.", "recommendations": []}
+def chat(req: ChatRequest):
+
+    if req.user_id not in user_states:
+        user_states[req.user_id] = create_initial_state()
+
+    state = user_states[req.user_id]
+
+    response = process_input(req.message, state, nodes, model)
+
+    return {"response": response}
 
 def send_verification_email(receiver_email: str, otp: str):
     sender_email = os.getenv("SMTP_EMAIL")

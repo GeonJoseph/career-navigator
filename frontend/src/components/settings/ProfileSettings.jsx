@@ -136,12 +136,10 @@ const ProfileSettings = () => {
     };
 
     const isFormValid = () => {
-        // Must have first name, last name, phone number + country code, and a document
         return profileData.first_name.trim() !== '' && 
-               profileData.last_name.trim() !== '' && 
-               profileData.country_code.trim() !== '' &&
-               profileData.phone_number.trim() !== '' &&
-               (selectedFile !== null || profileData.document_filename);
+            profileData.last_name.trim() !== '' && 
+            profileData.country_code.trim() !== '' &&
+            profileData.phone_number.trim() !== '';
     };
 
     const handleSave = async () => {
@@ -230,7 +228,7 @@ const ProfileSettings = () => {
             {success && (
                 <div className="mb-6 bg-green-500/10 text-green-400 p-4 rounded-xl text-sm font-medium border border-green-500/20 flex items-center gap-2 animate-in slide-in-from-top-2">
                     <CheckCircle2 className="w-5 h-5" />
-                    Profile updated and document analyzed successfully!
+                    Profile updated successfully!
                 </div>
             )}
 
@@ -361,7 +359,7 @@ const ProfileSettings = () => {
                                 </div>
                                 <div>
                                     <h4 className={`font-bold ${profileData.user_type === 'student' ? 'text-blue-400' : 'text-slate-200'}`}>Student</h4>
-                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">Currently in  school. Requires uploading your academic marklists for guidance.</p>
+                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">Currently in  school. You can upload your academic marklists for better recommendations</p>
                                 </div>
                             </div>
 
@@ -376,7 +374,7 @@ const ProfileSettings = () => {
                                 </div>
                                 <div>
                                     <h4 className={`font-bold ${profileData.user_type === 'professional' ? 'text-purple-400' : 'text-slate-200'}`}>Professional / Graduate</h4>
-                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">Completed UG/PG or currently working. Requires uploading your latest Resume/CV.</p>
+                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">Completed UG/PG or currently working. You can upload your resume/CV to improve recommendations.</p>
                                 </div>
                             </div>
                         </div>
@@ -385,15 +383,14 @@ const ProfileSettings = () => {
 
 
 
-                    {/* Mandatory Document Upload */}
                     <div className="space-y-4">
                         <h3 className="text-lg font-bold text-white border-b border-white/10 pb-2">Career Documents</h3>
                         <div className={`border-2 border-dashed ${profileData.document_filename ? 'border-green-500/50 bg-green-500/10' : 'border-white/20 bg-[#0A0A0A]/40'} rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-all`}>
                             <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 shadow-sm ${profileData.document_filename ? 'bg-green-500/20 text-green-400' : 'bg-slate-800 text-slate-400'}`}>
                                 <FileText className="w-6 h-6" />
                             </div>
-                            <h4 className="text-sm font-bold text-white mb-1">{docLabel} <span className="text-red-500">*</span></h4>
-                            <p className="text-xs text-slate-400 mb-6 max-w-sm">{docDesc} This is mandatory to use the  chatbot feature.</p>
+                            <h4 className="text-sm font-bold text-white mb-1">{docLabel} (Optional)</h4>
+                            <p className="text-xs text-slate-400 mb-6 max-w-sm">{docDesc} This is optional but helps improve recommendations.</p>
                             
                             <input type="file" ref={pdfInputRef} onChange={handlePdfUpload} accept=".pdf,application/pdf" className="hidden" />
                             

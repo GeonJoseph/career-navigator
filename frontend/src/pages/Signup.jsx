@@ -130,6 +130,10 @@ const Signup = () => {
                 return;
             }
 
+            if (data.profile_completed !== undefined) {
+                localStorage.setItem("profile_completed", String(data.profile_completed));
+            }
+
             // Auto-login after verification
             localStorage.setItem("access_token", data.access_token);
             if (data.refresh_token) {

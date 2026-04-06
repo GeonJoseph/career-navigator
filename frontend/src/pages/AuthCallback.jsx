@@ -8,9 +8,8 @@ const AuthCallback = () => {
 
     useEffect(() => {
         const error = searchParams.get("error");
-        
+
         if (error) {
-            // Redirect to login and pass the error using React Router state
             navigate('/login', { state: { authError: error } });
             return;
         }
@@ -22,9 +21,15 @@ const AuthCallback = () => {
         if (accessToken) {
             localStorage.setItem("access_token", accessToken);
             if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
-            if (profileCompleted !== null) localStorage.setItem("profile_completed", profileCompleted === "true");
-            
-            navigate('/');
+
+            if (profileCompleted === "false") {
+                navigate('/settings', {
+                    state: { message: "Please complete your profile." }
+                });
+            } else {
+                navigate('/');
+            }
+
         } else {
             navigate('/login');
         }
