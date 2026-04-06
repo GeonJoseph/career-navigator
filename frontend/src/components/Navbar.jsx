@@ -65,6 +65,7 @@ const Navbar = () => {
                 { label: "Courses", path: "/courses" },
                 { label: "Internships", path: "/internships" },
                 { label: "Jobs", path: "/applications" },
+                { label: "Resume Analyzer", path: "/resume-analyzer" },
             ]
             : [];
 

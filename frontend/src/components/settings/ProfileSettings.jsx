@@ -1,25 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, User, Loader2, Save, FileText, CheckCircle2, GraduationCap, Briefcase, ChevronDown } from 'lucide-react';
 
+
 const ProfileSettings = () => {
+
     const [profileData, setProfileData] = useState({
         first_name: '',
         last_name: '',
         name: '',
         profile_photo: '',
         user_type: 'student',
-        document_filename: '',
         skills: '',
         dob: '',
         interests: '',
+        marks: []   // 🔥 IMPORTANT
     });
     const [originalData, setOriginalData] = useState(null);
-    const [selectedFile, setSelectedFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [success, setSuccess] = useState(false);
     const fileInputRef = useRef(null);
-    const pdfInputRef = useRef(null);
 
     useEffect(() => {
         fetchProfile();
@@ -39,12 +39,20 @@ const ProfileSettings = () => {
                     name: data.name || '',
                     profile_photo: data.profile_photo || '',
                     user_type: data.user_type || 'student',
-                    document_filename: data.document_filename || '',
                     skills: data.skills || '',
                     dob: data.dob || '',
-                    interests: data.interests || ''
+                    interests: data.interests || '',
+                    marks: data.marks || []
                 };
                 setProfileData(processedData);
+
+                if (!data.marks || data.marks.length === 0) {
+                    setProfileData(prev => ({
+                        ...prev,
+                        marks: [{ subject: "", score: "", total: "" }]
+                    }));
+                }
+
                 setOriginalData(processedData);
             } else if (response.status === 401) {
                 localStorage.removeItem("access_token");
@@ -65,6 +73,34 @@ const ProfileSettings = () => {
         setSuccess(false);
     };
 
+    const addMarkField = () => {
+        setProfileData(prev => ({
+            ...prev,
+            marks: [...(prev.marks || []), { subject: "", score: "", total: "" }]
+        }));
+    };
+
+    const handleMarksChange = (index, field, value) => {
+        const updated = Array.isArray(profileData.marks)
+            ? [...profileData.marks]
+            : [];
+                updated[index][field] = value;
+
+        setProfileData(prev => ({
+            ...prev,
+            marks: updated
+        }));
+    };
+
+    const removeMarkField = (index) => {
+        const updated = profileData.marks.filter((_, i) => i !== index);
+
+        setProfileData(prev => ({
+            ...prev,
+            marks: updated
+        }));
+    };
+
     const handlePhotoUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -81,23 +117,6 @@ const ProfileSettings = () => {
         }
     };
 
-    const handlePdfUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.type !== "application/pdf") {
-                alert("Please upload a PDF file.");
-                return;
-            }
-            if (file.size > 10 * 1024 * 1024) {
-                alert("Document must be smaller than 10MB");
-                return;
-            }
-            setSelectedFile(file);
-            setProfileData(prev => ({ ...prev, document_filename: file.name }));
-            setSuccess(false);
-        }
-    };
-
     const removePhoto = () => {
         setProfileData(prev => ({ ...prev, profile_photo: '' }));
         setSuccess(false);
@@ -105,7 +124,6 @@ const ProfileSettings = () => {
 
     const hasChanges = () => {
         if (!originalData) return true;
-        if (selectedFile !== null) return true;
         return JSON.stringify(profileData) !== JSON.stringify(originalData);
     };
 
@@ -131,13 +149,14 @@ const isFormValid = () => {
             formData.append('skills', profileData.skills);
             formData.append('dob', profileData.dob);
             formData.append('interests', profileData.interests);
+            const cleanedMarks = profileData.marks.filter(
+                m => m.subject && m.score && m.total
+            );
+
+            formData.append('marks', JSON.stringify(cleanedMarks));
             
             if (profileData.profile_photo !== originalData.profile_photo) {
                 formData.append('profile_photo', profileData.profile_photo);
-            }
-            
-            if (selectedFile) {
-                formData.append('document', selectedFile);
             }
 
             const response = await fetch('http://127.0.0.1:8000/api/user/profile', {
@@ -150,7 +169,6 @@ const isFormValid = () => {
 
             if (response.ok) {
                 setOriginalData(profileData);
-                setSelectedFile(null);
                 setSuccess(true);
                 localStorage.setItem('profile_completed', 'true');
                 setTimeout(() => setSuccess(false), 4000);
@@ -188,7 +206,7 @@ const isFormValid = () => {
                         <User className="w-6 h-6 text-blue-500" />
                         Personal Information
                     </h2>
-                    <p className="text-slate-400 text-sm mt-1">Update your basic details and career documents.</p>
+                    <p className="text-slate-400 text-sm mt-1">Update your basic details</p>
                 </div>
             </div>
 
@@ -298,7 +316,7 @@ const isFormValid = () => {
                                 </div>
                                 <div>
                                     <h4 className={`font-bold ${profileData.user_type === 'student' ? 'text-blue-400' : 'text-slate-200'}`}>Student</h4>
-                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">Currently in  school. You can upload your academic marklists for better recommendations</p>
+                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">Currently in  school. You can enter your subject-wise marks to improve recommendations</p>
                                 </div>
                             </div>
 
@@ -313,7 +331,7 @@ const isFormValid = () => {
                                 </div>
                                 <div>
                                     <h4 className={`font-bold ${profileData.user_type === 'professional' ? 'text-purple-400' : 'text-slate-200'}`}>Professional / Graduate</h4>
-                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">Completed UG/PG or currently working. You can upload your resume/CV to improve recommendations.</p>
+                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">Completed UG/PG or currently working. You can upload your resume/CV to get job recommendation</p>
                                 </div>
                             </div>
                         </div>
@@ -322,28 +340,76 @@ const isFormValid = () => {
 
 
 
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-bold text-white border-b border-white/10 pb-2">Career Documents</h3>
-                        <div className={`border-2 border-dashed ${profileData.document_filename ? 'border-green-500/50 bg-green-500/10' : 'border-white/20 bg-[#0A0A0A]/40'} rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-all`}>
-                            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 shadow-sm ${profileData.document_filename ? 'bg-green-500/20 text-green-400' : 'bg-slate-800 text-slate-400'}`}>
-                                <FileText className="w-6 h-6" />
-                            </div>
-                            <h4 className="text-sm font-bold text-white mb-1">{docLabel} (Optional)</h4>
-                            <p className="text-xs text-slate-400 mb-6 max-w-sm">{docDesc} This is optional but helps improve recommendations.</p>
+                    {/* Student → Marks Input */}
+                    {profileData.user_type === "student" && (
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-bold text-white border-b border-white/10 pb-2">
+                                Academic Performance
+                            </h3>
+
                             
-                            <input type="file" ref={pdfInputRef} onChange={handlePdfUpload} accept=".pdf,application/pdf" className="hidden" />
-                            
-                            <button onClick={() => pdfInputRef.current?.click()} className="px-6 py-2.5 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition-colors border border-white/10 shadow-lg shadow-slate-900/50 active:scale-95">
-                                {profileData.document_filename ? "Replace File" : "Select PDF File"}
+                            {(profileData.marks || []).map((item, index) => (
+                                <div key={index} className="grid grid-cols-4 gap-3 items-center">
+                                    
+                                    <input
+                                        type="text"
+                                        placeholder="Subject"
+                                        value={item.subject}
+                                        onChange={(e) => handleMarksChange(index, "subject", e.target.value)}
+                                        className="p-2 bg-slate-900 border border-white/10 rounded-lg text-white"
+                                    />
+
+                                    <input
+                                        type="number"
+                                        placeholder="Marks"
+                                        value={item.score}
+                                        onChange={(e) => handleMarksChange(index, "score", e.target.value)}
+                                        className="p-2 bg-slate-900 border border-white/10 rounded-lg text-white"
+                                    />
+
+                                    <input
+                                        type="number"
+                                        placeholder="Out of"
+                                        value={item.total}
+                                        onChange={(e) => handleMarksChange(index, "total", e.target.value)}
+                                        className="p-2 bg-slate-900 border border-white/10 rounded-lg text-white"
+                                    />
+
+                                    {/* ❌ Remove Button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => removeMarkField(index)}
+                                        className="text-red-400 hover:text-red-300 font-bold text-lg"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+
+                            <button
+                                onClick={addMarkField}
+                                className="text-blue-400 text-sm hover:text-blue-300"
+                            >
+                                + Add Subject
                             </button>
-
-                            {profileData.document_filename && (
-                                <div className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-slate-900/80 border border-white/10 rounded-md text-xs font-semibold text-slate-300">
-                                    {profileData.document_filename}
-                                </div>
-                            )}
                         </div>
-                    </div>
+                    )}
+
+                    {/* Professional → Resume Analyzer */}
+                    {profileData.user_type === "professional" && (
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-bold text-white border-b border-white/10 pb-2">
+                                Resume Analysis
+                            </h3>
+
+                            <button
+                                onClick={() => window.location.href = "/resume-analyzer"}
+                                className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-500"
+                            >
+                                Go to Resume Analyzer
+                            </button>
+                        </div>
+                    )}
 
                     <div className="pt-8 border-t border-white/10 flex justify-end">
                         <button 

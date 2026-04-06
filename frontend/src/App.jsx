@@ -14,6 +14,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './pages/AdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import AuthCallback from './pages/AuthCallback';
+import ResumeAnalyzer from './pages/ResumeAnalyzer';
 
 function App() {
   const navigate = useNavigate();
@@ -76,6 +77,7 @@ function App() {
           <Route path="results" element={<Results />} />
           <Route path="courses" element={<Courses />} />
           <Route path="internships" element={<Internships />} />
+          <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
         </Route>
       </Route>
     </Routes>
