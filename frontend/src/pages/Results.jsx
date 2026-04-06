@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart2, Briefcase, GraduationCap, Clock, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLocation } from "react-router-dom";
 
 const Results = () => {
     const [topCareer, setTopCareer] = useState(null);
 
+    const location = useLocation();
+
     useEffect(() => {
         const savedResults = localStorage.getItem("careerResults");
+
+        console.log("RESULT PAGE READ:", savedResults);
+
         if (savedResults) {
             const parsed = JSON.parse(savedResults);
             if (Array.isArray(parsed) && parsed.length > 0) {
                 setTopCareer(parsed[0]);
             }
         } else {
-            // Default mock result if none found
-            setTopCareer('Frontend Engineer');
+            setTopCareer(null);
         }
-    }, []);
+    }, [location]); // 🔥 critical
 
     return (
         <div className="space-y-8">

@@ -55,12 +55,17 @@ def process_input(user_input, state, nodes, model):
             state["interest_edit_mode"] = False
             state["interest_edit_choice"] = None
 
-            return traverse(state["initial_interest"], state, nodes, model)
+            result = traverse(state["initial_interest"], state, nodes, model)
+
+            if isinstance(result, dict):
+                return result
+
+            return {"response": result}
 
     # --------------------------------------------------
     # ✅ store initial interest once
     # --------------------------------------------------
-    if state["initial_interest"] is None:
+    if state["initial_interest"] is None or state["initial_interest"] == "start":
         state["initial_interest"] = user_input
 
     # --------------------------------------------------
@@ -86,7 +91,7 @@ def process_input(user_input, state, nodes, model):
         )
 
         state["last_question"] = question
-        return question
+        return {"response": question}
 
     responses = []
     knowledge_responses = []
@@ -101,15 +106,26 @@ def process_input(user_input, state, nodes, model):
             chosen = handle_clarification(user_input, state, nodes, model)
 
             if chosen is None:
-                return traverse(state["initial_interest"], state, nodes, model)
+                result = traverse(state["initial_interest"], state, nodes, model)
+
+                if isinstance(result, dict):
+                    return result
+
+                return {"response": result}
 
             question = f"{nodes[chosen]['name']} seems to match your interests. Do you want to continue with this?"
             state["last_question"] = question
-            return question
+            return {"response": question}
 
         elif state["current_stage"] == "confirmation":
             confirmation_response = handle_confirmation(user_input, state, nodes, model)
-            navigation_responses.append(confirmation_response)
+
+            # 🔥 ALWAYS preserve dict responses (final_result)
+            if isinstance(confirmation_response, dict):
+                return confirmation_response
+
+            # 🔥 WRAP string properly
+            return {"response": confirmation_response}
 
     # --------------------------------------------------
     # 2️⃣ HANDLE KNOWLEDGE / WEB (after state update)
@@ -128,6 +144,10 @@ def process_input(user_input, state, nodes, model):
     # --------------------------------------------------
     if "DOMAIN_RESPONSE" in intents and state["current_stage"] == "narrowing":
         next_question = traverse(state["initial_interest"], state, nodes, model)
+
+        if isinstance(next_question, dict):
+            return next_question  # must include final_result
+
         navigation_responses.append(next_question)
 
     # --------------------------------------------------
@@ -139,7 +159,12 @@ def process_input(user_input, state, nodes, model):
             return handle_confirmation(user_input, state, nodes, model)
 
         elif state["current_stage"] == "narrowing":
-            return traverse(state["initial_interest"], state, nodes, model)
+            result = traverse(state["initial_interest"], state, nodes, model)
+
+            if isinstance(result, dict):
+                return result
+
+            return {"response": result}
 
     # --------------------------------------------------
     # 5️⃣ FINAL RESPONSE
@@ -150,9 +175,19 @@ def process_input(user_input, state, nodes, model):
         response = "\n\n".join(knowledge_responses)
 
         if state.get("last_question"):
-            return response + "\n\n" + state["last_question"]
+            response = response + "\n\n" + state["last_question"]
 
-        return response
+        return {"response": response}
 
     # 🔥 Otherwise continue navigation normally
-    return "\n\n".join(navigation_responses)
+    # 🔥 HANDLE DICT RESPONSES (final_result case)
+    for res in navigation_responses:
+        if isinstance(res, dict):
+            return res
+
+    # normal string flow
+    final_text = "\n\n".join(navigation_responses)
+
+    return {
+        "response": final_text if final_text else "Let's continue."
+    }

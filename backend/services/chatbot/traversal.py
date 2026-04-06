@@ -54,30 +54,32 @@ def traverse(user_input, state, nodes, model):
     # --------------------------------------------------
     if len(candidates) == 0:
 
-        # CASE 1: user rejected everything at root
+        # CASE 1: user rejected everything
         if state["current_branch"] is None:
             state["current_stage"] = "narrowing"
-
-            # 🔥 Reset rejected branches
             state["rejected_branches"] = set()
 
-            return (
-                "I'm not able to find a suitable path based on your selections.\n"
-                "Could you tell me a bit more about your interests?"
-            )
+            return {
+                "response": "I'm not able to find a suitable path based on your selections.\nCould you tell me a bit more about your interests?"
+            }
 
-        # CASE 2: reached leaf node
-        final_branch = nodes[state["current_branch"]]["name"]
+        # CASE 2: final leaf node
+        final_node = nodes[state["current_branch"]]
 
         state["current_stage"] = "finalized"
 
-        return (
-            f"{final_branch} looks like a great match for your interests.\n"
-            "Would you like to:\n"
-            "1. Learn what this role involves?\n"
-            "2. See required skills?\n"
-            "3. Explore career roadmap?"
-        )
+        return {
+            "response": (
+                f"{final_node['name']} looks like a great match for your interests.\n"
+                "Redirecting you to detailed results..."
+            ),
+            "final_result": {
+                "id": final_node["id"],
+                "name": final_node["name"],
+                "description": final_node.get("description"),
+                "skills": final_node.get("skills", [])
+            }
+        }
 
     # --------------------------------------------------
     # NORMAL CASE
