@@ -17,7 +17,6 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-from fastapi.security import OAuth2PasswordBearer
 from security import hash_password, verify_password
 from database import engine, SessionLocal
 from models import Base, User
@@ -31,6 +30,7 @@ from pydantic import BaseModel
 from services.chatbot.controller import process_input
 from services.chatbot.state import create_initial_state
 from services.chatbot.model import load_model
+from dependencies import get_current_user
 from services.chatbot.data_loader import load_nodes
 
 from routes import bookmarks
@@ -43,7 +43,6 @@ app.include_router(bookmarks.router)
 # 🔥 simple in-memory state (later replace with DB/user session)
 user_states = {}
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 Base.metadata.create_all(bind=engine)
 
@@ -53,10 +52,10 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # React app
+    allow_origins=["http://localhost:5173"],  # 👈 IMPORTANT
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"],  # 👈 VERY IMPORTANT
 )
 
 # 🔥 LOAD ONCE (GLOBAL)
@@ -69,31 +68,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-def get_current_user(token: str = Depends(oauth2_scheme),
-                     db: Session = Depends(get_db)):
-
-    credentials_exception = HTTPException(
-        status_code=401,
-        detail="Could not validate credentials",
-    )
-
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-
-        if email is None:
-            raise credentials_exception
-
-    except JWTError:
-        raise credentials_exception
-
-    user = db.query(User).filter(User.email == email).first()
-
-    if user is None:
-        raise credentials_exception
-
-    return user
 
 def is_profile_complete(user: User):
     return all([
@@ -294,32 +268,45 @@ def register(request: RegisterRequest, background_tasks: BackgroundTasks, db: Se
 @app.post("/verify-email")
 def verify_email(request: VerifyEmailRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == request.email).first()
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
         
     if not user.verification_code or user.verification_code != request.otp:
         raise HTTPException(status_code=400, detail="Invalid verification code")
-        
+
     user.is_verified = True
     user.verification_code = None
-    
+
     background_tasks.add_task(send_welcome_email, user.email)
-    
+
+    # 🔥 FIX STARTS HERE
     access_token = create_access_token({
-        "sub": user.email,
+        "sub": str(user.id),   # ✅ CHANGED
         "role": user.role
     })
+
     expires_delta = timedelta(days=30) if request.remember_me else timedelta(days=1)
-    refresh_token = create_refresh_token({"sub": user.email}, expires_delta=expires_delta)
-    
+
+    refresh_token = create_refresh_token(
+        {"sub": str(user.id)},   # ✅ CHANGED
+        expires_delta=expires_delta
+    )
+    # 🔥 FIX ENDS HERE
+
     user.refresh_token = refresh_token
     db.commit()
-    
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "profile_completed": bool(user.first_name and user.last_name and user.phone_number and user.document_filename)
+        "profile_completed": bool(
+            user.first_name and 
+            user.last_name and 
+            user.phone_number and 
+            user.document_filename
+        )
     }
 
 @app.post("/login")
@@ -370,28 +357,36 @@ def refresh(request: RefreshRequest, db: Session = Depends(get_db)):
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )
-        email = payload.get("sub")
 
-        if email is None:
+        user_id = payload.get("sub")
+
+        print("REFRESH TOKEN PAYLOAD:", payload)
+
+        if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.id == int(user_id)).first()
 
     if not user or user.refresh_token != request.refresh_token:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     new_access_token = create_access_token({
-        "sub": user.email,
+        "sub": str(user.id),   # ✅ FIXED
         "role": user.role
     })
 
     return {
         "access_token": new_access_token,
         "token_type": "bearer",
-        "profile_completed": bool(user.first_name and user.last_name and user.phone_number and user.document_filename)
+        "profile_completed": bool(
+            user.first_name and
+            user.last_name and
+            user.phone_number and
+            user.document_filename
+        )
     }
 
 @app.post("/logout")
@@ -403,20 +398,19 @@ def logout(request: LogoutRequest, db: Session = Depends(get_db)):
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )
-        email = payload.get("sub")
+        user_id = payload.get("sub")
 
-        if email is None:
+        if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.id == int(user_id)).first()
 
     if not user or user.refresh_token != request.refresh_token:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-    # Invalidate refresh token
     user.refresh_token = None
     db.commit()
 

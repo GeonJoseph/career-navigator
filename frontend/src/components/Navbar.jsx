@@ -8,7 +8,13 @@ const Navbar = () => {
     const navigate = useNavigate();
 
     const [profile, setProfile] = useState({ name: "U", photo: null });
-    const accessToken = localStorage.getItem("access_token");
+    const [accessToken, setAccessToken] = useState(null);
+
+    useEffect(() => {
+        const token = localStorage.getItem("access_token");
+        console.log("Loaded token from storage:", token);
+        setAccessToken(token);
+}, []);
     const isAuthenticated = !!accessToken;
 
     let userRole = null;
@@ -23,28 +29,40 @@ const Navbar = () => {
     }
 
     useEffect(() => {
-        if (accessToken) {
-            const fetchProfile = async () => {
-                try {
-                    const response = await fetch('http://127.0.0.1:8000/api/user/profile', {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        setProfile({
-                            name: (data.first_name ? data.first_name.charAt(0) : (data.name ? data.name.charAt(0) : "U")).toUpperCase(),
-                            photo: data.profile_photo
-                        });
-                    } else if (response.status === 401) {
-                        localStorage.removeItem("access_token");
-                        localStorage.removeItem("refresh_token");
-                        localStorage.removeItem("userRole");
-                        window.location.href = "/login";
+        if (!accessToken) return;   // ✅ IMPORTANT FIX
+
+        const fetchProfile = async () => {
+            try {
+                console.log("TOKEN USED IN NAVBAR:", accessToken);
+
+                const response = await fetch('http://127.0.0.1:8000/api/user/profile', {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
                     }
-                } catch (e) { console.error(e); }
-            };
-            fetchProfile();
-        }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    setProfile({
+                        name: (data.first_name
+                            ? data.first_name.charAt(0)
+                            : (data.name ? data.name.charAt(0) : "U")
+                        ).toUpperCase(),
+                        photo: data.profile_photo
+                    });
+
+                } else if (response.status === 401) {
+                    console.log("401 ERROR - TOKEN ISSUE");
+                }
+
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        fetchProfile();
+
     }, [accessToken]);
 
     useEffect(() => {

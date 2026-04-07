@@ -53,6 +53,7 @@ const Login = () => {
             if (data.profile_completed !== undefined) localStorage.setItem("profile_completed", data.profile_completed);
             
             const decoded = jwtDecode(data.access_token);
+            console.log("DECODED TOKEN:", decoded)
             const role = decoded.role;
 
             if (role === "Admin") navigate("/admin");
@@ -84,6 +85,7 @@ const Login = () => {
             });
 
             const data = await response.json();
+            console.log("LOGIN RESPONSE:", data);  // 👈 ADD HERE
 
             if (!response.ok) {
                 setError(data.detail || "Login failed");
@@ -101,6 +103,9 @@ const Login = () => {
 
             // Store tokens
             localStorage.setItem("access_token", data.access_token);
+
+            console.log("TOKEN SAVED:", localStorage.getItem("access_token")); // 👈 ADD THIS
+
             if (data.refresh_token) {
                 localStorage.setItem("refresh_token", data.refresh_token);
             }
