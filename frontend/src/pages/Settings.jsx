@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useLocation } from 'react-router-dom';
-import { User, Shield, ChevronRight, Briefcase, AlertCircle } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { User, Shield, ChevronRight, Briefcase } from 'lucide-react';
 import ProfileSettings from '../components/settings/ProfileSettings';
 import SecuritySettings from '../components/settings/SecuritySettings';
 
 const Settings = () => {
     const [searchParams] = useSearchParams();
-    const location = useLocation();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
-    const message = location.state?.message;
 
     useEffect(() => {
         const tab = searchParams.get('tab');
@@ -26,13 +24,6 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-black text-white tracking-tight">Account Settings</h1>
                 </div>
-
-                {message && (
-                    <div className="bg-yellow-500/10 text-yellow-400 p-4 rounded-xl text-sm font-medium border border-yellow-500/20 flex items-center gap-3 animate-in slide-in-from-top-2">
-                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                        {message}
-                    </div>
-                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {/* Sidebar Navigation */}

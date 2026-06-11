@@ -19,8 +19,13 @@ const AuthCallback = () => {
         const profileCompleted = searchParams.get("profile_completed");
 
         if (accessToken) {
+            // Clear any stale data from a previous session
+            localStorage.removeItem("careerResults");
+
             localStorage.setItem("access_token", accessToken);
             if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
+            if (profileCompleted !== null) localStorage.setItem("profile_completed", profileCompleted);
+            else localStorage.removeItem("profile_completed");
 
             if (profileCompleted === "false") {
                 navigate('/settings', {

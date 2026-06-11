@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Star, Clock, ExternalLink } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { apiFetch } from '../utils/api';
 
 
 function getCareerFromStorage() {
@@ -26,19 +27,8 @@ const Courses = () => {
     const fetchCourses = async (query) => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("access_token");
-            const response = await fetch(`http://127.0.0.1:8000/api/courses?query=${query}`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
+            const response = await apiFetch(`/api/courses?query=${query}`);
             const data = await response.json();
-            if (response.status === 401) {
-                localStorage.removeItem("access_token");
-                localStorage.removeItem("refresh_token");
-                window.location.href = "/login";
-                return;
-            }
             if (response.ok) {
                 setCourses(Array.isArray(data) ? data : (data.results || []));
             } else {
@@ -53,76 +43,43 @@ const Courses = () => {
     };
 
     const fetchBookmarks = async () => {
-        const token = localStorage.getItem("access_token");
-
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/bookmarks", {
-            headers: {
-                "Authorization": `Bearer ${token}`
-            }
-            });
-
+            const res = await apiFetch("/api/bookmarks");
             const data = await res.json();
             setBookmarks(data);
-
         } catch (err) {
             console.error("Error fetching bookmarks:", err);
         }
-        };
+    };
 
     const isBookmarked = (course) => {
     return bookmarks.some(b => b.course_url === course.url);
     };
 
     const toggleBookmark = async (course) => {
-        const token = localStorage.getItem("access_token");
-
         const exists = isBookmarked(course);
-
         try {
             if (exists) {
-            // DELETE bookmark
-            await fetch("http://127.0.0.1:8000/api/bookmarks", {
-                method: "DELETE",
-                headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                course_url: course.url
-                })
-            });
-
-            // 🔥 UPDATE UI
-            setBookmarks(prev =>
-                prev.filter(b => b.course_url !== course.url)
-            );
-
+                const bm = bookmarks.find(b => b.course_url === course.url);
+                await apiFetch(`/api/bookmarks/${bm?.id}`, { method: "DELETE" });
+                setBookmarks(prev => prev.filter(b => b.course_url !== course.url));
             } else {
-            // ADD bookmark
-            const res = await fetch("http://127.0.0.1:8000/api/bookmarks", {
-                method: "POST",
-                headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                course_title: course.title,
-                course_url: course.url,
-                provider: course.provider
-                })
-            });
-
-            const saved = await res.json();
-
-            // 🔥 UPDATE UI
-            setBookmarks(prev => [...prev, saved]);
+                const res = await apiFetch("/api/bookmarks", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        course_title: course.title,
+                        course_url: course.url,
+                        provider: course.provider
+                    })
+                });
+                const saved = await res.json();
+                setBookmarks(prev => [...prev, saved]);
             }
-
         } catch (err) {
             console.error("Bookmark error:", err);
         }
-        };
+    };
 
     useEffect(() => {
         const query = queryParam || getCareerFromStorage() || "React";

@@ -15,6 +15,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import AuthCallback from './pages/AuthCallback';
 import ResumeAnalyzer from './pages/ResumeAnalyzer';
+import ResetPassword from './pages/ResetPassword';
 
 function App() {
   const navigate = useNavigate();
@@ -56,6 +57,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Protected Routes */}

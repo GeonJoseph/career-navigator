@@ -99,7 +99,13 @@ const Login = () => {
 
             if (data.profile_completed !== undefined) {
                 localStorage.setItem("profile_completed", String(data.profile_completed));
+            } else {
+                // Fresh login — clear any stale profile flag from a previous session
+                localStorage.removeItem("profile_completed");
             }
+
+            // Clear stale career results from any previous session
+            localStorage.removeItem("careerResults");
 
             // Store tokens
             localStorage.setItem("access_token", data.access_token);

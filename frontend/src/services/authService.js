@@ -11,6 +11,9 @@ export const logout = async () => {
 
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem("profile_completed");
+    localStorage.removeItem("careerResults");
+    localStorage.removeItem("userRole");
 
     window.location.href = "/login";
 };

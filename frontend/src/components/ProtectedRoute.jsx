@@ -12,12 +12,6 @@ const ProtectedRoute = () => {
 
     try {
         const decoded = jwtDecode(token);
-        const profileCompleted = localStorage.getItem('profile_completed') === 'true';
-        
-        // Block chatbot access if profile is not completed
-        if (decoded.role !== 'Admin' && !profileCompleted && location.pathname === '/chat') {
-            return <Navigate to="/settings?tab=profile" replace state={{ message: "Please complete your profile details and upload a document to access the AI Career Bot." }} />;
-        }
     } catch {
         return <Navigate to="/login" replace />;
     }

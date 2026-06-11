@@ -1,14 +1,21 @@
 from fastapi import Depends, HTTPException, Header
 from jose import jwt, JWTError
+from sqlalchemy.orm import Session
 
 from database import SessionLocal
 from models import User
 from auth import SECRET_KEY, ALGORITHM
 
 
-def get_current_user(authorization: str = Header(None)):
-    print("AUTH HEADER:", authorization)
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
+
+def get_current_user(authorization: str = Header(None), db: Session = Depends(get_db)):
     if not authorization:
         raise HTTPException(status_code=401, detail="No auth header")
 
@@ -17,21 +24,14 @@ def get_current_user(authorization: str = Header(None)):
 
     token = authorization.split(" ")[1]
 
-    print("EXTRACTED TOKEN:", token)
-
-    db = SessionLocal()
-
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
 
-        print("Decoded token:", payload)
-
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
 
-    except JWTError as e:
-        print("JWT ERROR:", e)
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
     user = db.query(User).filter(User.id == int(user_id)).first()

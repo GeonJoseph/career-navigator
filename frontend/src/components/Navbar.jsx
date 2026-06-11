@@ -2,6 +2,7 @@ import { jwtDecode } from "jwt-decode";
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../services/authService";
+import { apiFetch } from "../utils/api";
 
 const Navbar = () => {
     const location = useLocation();
@@ -35,11 +36,7 @@ const Navbar = () => {
             try {
                 console.log("TOKEN USED IN NAVBAR:", accessToken);
 
-                const response = await fetch('http://127.0.0.1:8000/api/user/profile', {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
-                });
+                const response = await apiFetch('/api/user/profile');
 
                 if (response.ok) {
                     const data = await response.json();
