@@ -24,8 +24,7 @@ google_search_results==2.4.2
 googleapis-common-protos==1.74.0
 greenlet==3.2.4
 groq==0.31.1
-grpcio==1.74.0
-grpcio-status==1.74.0
+protobufgrpcio-status==1.74.0
 h11==0.16.0
 hf-xet==1.1.10
 httpcore==1.0.9
@@ -48,7 +47,7 @@ numpy==2.3.3
 packaging==25.0
 passlib==1.7.4
 proto-plus==1.26.1
-protobuf>=6.31.1,<6.0.0dev
+
 psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pyasn1-modules==0.4.2
