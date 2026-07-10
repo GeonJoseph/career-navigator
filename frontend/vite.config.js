@@ -1,10 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => ({
-  plugins: [react()],
-  // Only use the GitHub Pages base path in production builds.
-  // During local dev (npm run dev) we serve from root '/'.
-  base: mode === 'production' ? '/career-navigator/' : '/',
-}))
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(), // Actively compiles Tailwind v4 directives smoothly
+  ],
+  // Vercel serves applications from the root folder, so we use '/'
+  base: '/', 
+})
