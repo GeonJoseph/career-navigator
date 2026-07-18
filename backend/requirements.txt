@@ -47,7 +47,7 @@ pyasn1==0.6.1
 pyasn1-modules==0.4.2
 pycparser==2.23
 pydantic==2.11.9
-pydantic_core==2.33.2
+# pydantic_core==2.33.2
 Pygments==2.19.2
 pyparsing==3.2.4
 PyPDF2==3.0.1
@@ -78,7 +78,7 @@ tokenizers==0.22.0
 tqdm==4.67.1
 transformers==4.56.2
 typer==0.17.4
-typing-inspection>=0.4.2
+typing-inspection==0.4.2
 typing_extensions==4.15.0
 uritemplate==4.2.0
 urllib3==2.5.0
